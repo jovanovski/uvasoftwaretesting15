@@ -36,7 +36,7 @@ sumDigits n = toInteger (sum (map (sum . (map digitToInt) . show) n))
 
 -- Validate a credit card number using the above functions.
 luhn :: Integer -> Bool
-luhn = undefined
+luhn n = rem (sumDigits (doubleEveryOther (toRevDigits n))) 10 == 0
 
 -- Exercise 6 -----------------------------------------
 
