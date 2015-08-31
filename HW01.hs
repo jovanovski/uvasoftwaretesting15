@@ -16,7 +16,7 @@ dropLastDigit n = if n >= 10 then read (take ((length (show n))-1) (show n)) els
 -- Exercise 2 -----------------------------------------
 
 toRevDigits :: Integer -> [Integer]
-toRevDigits = undefined
+toRevDigits n = map (toInteger . digitToInt) (reverse (show n))
 
 -- Exercise 3 -----------------------------------------
 
