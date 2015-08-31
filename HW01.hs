@@ -11,7 +11,7 @@ lastDigit n = toInteger (digitToInt (last (show n)))
 
 -- Drop the last digit from a number
 dropLastDigit :: Integer -> Integer
-dropLastDigit = undefined
+dropLastDigit n = if n >= 10 then read (take ((length (show n))-1) (show n)) else 0
 
 -- Exercise 2 -----------------------------------------
 
