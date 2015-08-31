@@ -30,8 +30,7 @@ doubleEveryOther (x:y:zs) = x:(2*y):(doubleEveryOther zs)
 
 -- Calculate the sum of all the digits in every Integer.
 sumDigits :: [Integer] -> Integer
-sumDigits = undefined
-
+sumDigits n = toInteger (sum (map (sum . (map digitToInt) . show) n))
 
 -- Exercise 5 -----------------------------------------
 
