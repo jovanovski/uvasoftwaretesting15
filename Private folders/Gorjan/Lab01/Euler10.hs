@@ -1,10 +1,5 @@
 module Euler10 where
 
-isPrime :: Integer -> Bool
-isPrime x = length(filter (\y -> (rem x y == 0 && y^2<x)) [2..x]) == 0
-
-
-
 sieve :: [Integer] -> [Integer]
 sieve [] = []
 sieve (0 : xs) = sieve xs
@@ -15,7 +10,5 @@ sieve (n : xs) = n : sieve (mark xs 1 n)
 		mark (y:ys) k m | k == m = 0 : (mark ys 1 m)
 						| otherwise = y : (mark ys (k+1) m)
 
-primesSum :: Integer
-primesSum = sum(sieve [2..200])
-
-
+primesSum ::Integer -> Integer
+primesSum x = sum(sieve [2..x])
