@@ -3,10 +3,12 @@ module Euler where
 tripleswithsum :: Integer -> [(Integer, Integer, Integer)]
 tripleswithsum n = [(a, b, (n - a - b)) | a <- [1..(n `div` 3)-1], b <- [(a+1)..((n-a) `div` 2)]]
 
-sol9 :: [(Integer, Integer, Integer)]
-sol9 = [(a,b,c) | (a,b,c) <- tripleswithsum 1000, a^2 + b^2 == c^2]
+tripleswithsumandpy :: Integer -> [(Integer, Integer, Integer)]
+tripleswithsumandpy n = [(a,b,c) | (a,b,c) <- tripleswithsum n, a^2 + b^2 == c^2]
 
-
+sol9 :: Integer
+sol9 = let (a,b,c) = head (tripleswithsumandpy 1000)
+       in a*b*c
 
 -- Continuing to sieve after x^2 > n takes too much time and is not necessary because we only use primes up to n.
 -- After x^2 > n all remaining numbers between x and n must be prime, otherwise they would have already cancelled 
