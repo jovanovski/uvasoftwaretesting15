@@ -12,3 +12,9 @@ sieve n (x : xs) = if x^2 > n then x:(filter (>0) xs) else x : sieve n (mark xs 
 
 primesSum ::Integer -> Integer
 primesSum x = sum(sieve x [2..x])
+
+optimizedSieve :: Integer -> [Integer] -> [Integer]
+optimizedSieve n (x:xs) = if x^2 > n then x:(filter (<n) xs) else x : (optimizedSieve n (filter (\y -> y `mod` x /= 0) xs))
+
+optimizedPrimesSum :: Integer -> Integer
+optimizedPrimesSum n = sum(optimizedSieve n [2..n])
