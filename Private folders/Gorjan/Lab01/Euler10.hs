@@ -1,9 +1,9 @@
 module Euler10 where
 
-sieve :: [Integer] -> [Integer]
-sieve [] = []
-sieve (0 : xs) = sieve xs
-sieve (n : xs) = n : sieve (mark xs 1 n)
+sieve :: Integer -> [Integer] -> [Integer]
+sieve n [] = []
+sieve n (0 : xs) = sieve n xs
+sieve n (x : xs) = if x^2 > n then x:(filter (>0) xs) else x : sieve n (mark xs 1 x)
 	where
 		mark :: [Integer] -> Integer -> Integer -> [Integer]
 		mark [] k m = []
@@ -11,4 +11,4 @@ sieve (n : xs) = n : sieve (mark xs 1 n)
 						| otherwise = y : (mark ys (k+1) m)
 
 primesSum ::Integer -> Integer
-primesSum x = sum(sieve [2..x])
+primesSum x = sum(sieve x [2..x])
