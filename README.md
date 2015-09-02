@@ -1,2 +1,5 @@
-# uvasoftwaretesting15
-Group FT_1
+# UvA Software Testing: FT_1
+Group of:
+Ardavan Ghaffari
+Merijn Wijngaard
+Gorjan Jovanovski
