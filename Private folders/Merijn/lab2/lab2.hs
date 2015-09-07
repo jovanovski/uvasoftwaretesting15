@@ -1,6 +1,7 @@
 module Lab2 where 
 
 import Data.List
+import Data.Char
 import System.Random
 import Testing
 
@@ -73,11 +74,22 @@ shuffle xs = do
   p <- getRandomInteger (length xs - 1)
   q <- shuffle (delete (xs !! p) xs)
   return ((xs !! p) : q)
+
+changeAtRandom :: Eq a => [a] -> IO [a]
+changeAtRandom [] = return []
+changeAtRandom ys@(x:xs) = do
+  p <- getRandomInteger 1
+  q <- getRandomInteger (length xs)
+  if p == 0 then 
+    return ys
+  else
+    let (a,b) = splitAt q xs
+    in return (a ++ [x] ++ b)
   
 testIsPermutation :: IO ()
 testIsPermutation = do
   xs <- genLists 100 10 20
-  (helper xs) where
+  helper xs where
     helper [] = print "All tests passed"
     helper ((a,b,r):ys) = 
       if isPermutation a b == r then 
@@ -87,3 +99,23 @@ testIsPermutation = do
       else
         do 
           print ("failed on: " ++ show a ++ " is a permutation of " ++ show b)
+
+isDerangement :: Eq a => [a] -> [a] -> Bool
+isDerangement x y = (isPermutation x y) && hasElementsInSamePosition x y == False
+
+hasElementsInSamePosition :: Eq a => [a] -> [a] -> Bool
+hasElementsInSamePosition [] _ = False
+hasElementsInSamePosition _ [] = False
+hasElementsInSamePosition (x:xs) (y:ys) = x == y || hasElementsInSamePosition xs ys
+
+perms :: [a] -> [[a]]
+perms [] = [[]]
+perms (x:xs) = [a ++ [x] ++ b | ys <- perms xs, z <- [0..(length ys)], let (a,b) = splitAt z ys]
+
+deran :: Eq a => [a] -> [[a]]
+deran xs = [y | y <- perms xs, (hasElementsInSamePosition xs y) == False]
+
+iban :: String -> Bool
+iban s = 
+  let sf = filter isAlphaNum s
+  in (read (foldr (++) "" [if isNumber x then x:"" else show (ord (toLower x) - 87) | x <- (drop 4 sf) ++ (take 4 sf)])) `mod` 97 == 1
