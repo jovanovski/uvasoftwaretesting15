@@ -83,18 +83,14 @@ genLists :: Int -> Int -> Int -> IO [([Int], [Int], Bool)]
 genLists 0 _ _ = return []
 genLists m n p = do 
   r <- genIntList n p
+  s <- (shuffle r)
   t <- genLists (m-1) n p
-  u <- getRandomInt 4
-  if u == 0 then
+  u <- getRandomInt 1
+  if length r == 0 || u == 0 then return ((r, s, True) : t)
+  else 
     do 
-      s <- (shuffle r)
-      return ((r, s, True) : t)
-  else if u == 1 then
-    do
-      s <- getRandomInt (length r)
-      return ((r, drop 1 r, False) : t)
-  else
-    return ((r, r, True) : t)
+      v <- getRandomInt ((length s)-1)
+      return ((r, (take v s) ++ [(s!!v)+1] ++ (drop (v+1) s), False) : t)
 
 shuffle :: Eq a => [a] -> IO [a]
 shuffle [] = return []
@@ -120,13 +116,13 @@ autoTestIsPermutation = do
   helper xs where
     helper [] = print "All tests passed"
     helper ((a,b,r):ys) = 
-      if isPermutation a b == r then 
-        do 
-          print ("pass on: " ++ show a ++ " is permutation of " ++ show b)
+      if isPermutation a b == r then
+        do
+          print ("pass on: " ++ show a ++ " is permutation of " ++ show b ++ " = " ++ if r then "True" else "False")
           helper ys
       else
         do 
-          print ("failed on: " ++ show a ++ " is a permutation of " ++ show b)
+          print ("failed on: " ++ show a ++ " is a permutation of " ++ show b ++ " = " ++ if r then "True" else "False")
 
 isDerangement :: Eq a => [a] -> [a] -> Bool
 isDerangement [] [] = True
@@ -139,7 +135,7 @@ perms [] = [[]]
 perms (x:xs) = [a ++ [x] ++ b | ys <- perms xs, z <- [0..(length ys)], let (a,b) = splitAt z ys]
 
 deran :: Eq a => [a] -> [[a]]
-deran xs = [y | y <- perms xs, (isDerangement xs y) == False]
+deran xs = [y | y <- perms xs, (isDerangement xs y) == True]
 
 testIsDerangement :: Eq a => ([a], [a], Bool) -> Bool
 testIsDerangement (a,b,r) = isDerangement a b == r
@@ -151,6 +147,7 @@ isDerangementTests = [Test "is derangement test" testIsDerangement
       ([1,2,3], [2,3,1], True),
       ([1,2,3], [3,2,1], False),
       ([1,2], [1,2,2], False),
+      ([1,2,2], [1,2], False),
       ([2,2,4,4], [4,4,2,2], True),
       ([], [1,2], False),
       ([1,2], [], False)
