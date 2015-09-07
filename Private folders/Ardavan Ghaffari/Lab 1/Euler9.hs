@@ -1,15 +1,5 @@
 module Euler9 where
 
-isInt :: Float -> Bool
-isInt x = x == fromInteger (round x)
-
-hasSqrt :: Float -> Bool
-hasSqrt x = isInt (sqrt x)
-
-
-doPytha :: [Float] -> [Float] -> [Integer]
-doPytha [] [] = []
-doPytha (x:xs) [] = doPytha xs [1..1000]
-doPytha [] (y:ys) = []
-doPytha (x:xs) (y:ys) = if hasSqrt (x^2 + y^2)  && (x + y + sqrt(x^2 + y^2))==1000 then [truncate(x),truncate(y)]
-						else doPytha (x:xs) ys
+specialPythagoreanTriplet :: [(Integer,Integer,Integer)]
+specialPythagoreanTriplet = take 1 (filter (\(a,b,c) -> a^2 + b^2 == c^2 && a + b + c == 1000) [ (a,b,c) | c <- [1..1000],b <- [1..c], a <- [1..b], a<b, b<c ])
+computeEuler9 = head $ map (\(a,b,c) -> a*b*c) specialPythagoreanTriplet
