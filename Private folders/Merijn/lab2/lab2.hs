@@ -79,12 +79,12 @@ genIntList m n = do
       return (t:ts)
 
 -- m = number of lists to generate, n = max lenght of list, p = max bound of int
-genLists :: Int -> Int -> Int -> IO [([Int], [Int], Bool)]
-genLists 0 _ _ = return []
-genLists m n p = do 
+genPerms :: Int -> Int -> Int -> IO [([Int], [Int], Bool)]
+genPerms 0 _ _ = return []
+genPerms m n p = do 
   r <- genIntList n p
   s <- (shuffle r)
-  t <- genLists (m-1) n p
+  t <- genPerms (m-1) n p
   u <- getRandomInt 1
   if length r == 0 || u == 0 then return ((r, s, True) : t)
   else 
@@ -112,7 +112,7 @@ changeAtRandom ys@(x:xs) = do
 
 autoTestIsPermutation :: IO ()
 autoTestIsPermutation = do
-  xs <- genLists 100 10 20
+  xs <- genPerms 100 10 20
   helper xs where
     helper [] = print "All tests passed"
     helper ((a,b,r):ys) = 
@@ -130,9 +130,9 @@ isDerangement [] _ = False
 isDerangement _ [] = False
 isDerangement (x:xs) (y:ys) = x /= y && isDerangement xs ys
 
-perms :: [a] -> [[a]]
+perms :: Eq a => [a] -> [[a]]
 perms [] = [[]]
-perms (x:xs) = [a ++ [x] ++ b | ys <- perms xs, z <- [0..(length ys)], let (a,b) = splitAt z ys]
+perms xs = [ y:z | y <- xs, z <- perms (delete y xs)]
 
 deran :: Eq a => [a] -> [[a]]
 deran xs = [y | y <- perms xs, (isDerangement xs y) == True]
@@ -178,12 +178,13 @@ ibanTests = [Test "iban test" testIban
     ]
   ]
 
-genIbans :: Int -> IO ([String])
-genIbans 0 = return []
-genIbans n = do
+-- arguments: n = number of ibans to generate, m = bban length
+genIbans :: Int -> Int -> IO ([String])
+genIbans 0 _ = return []
+genIbans n m = do
   cc <- genAlphanumericList 2
-  bban <- genAlphanumericList 14
-  r <- genIbans (n-1)
+  bban <- genAlphanumericList m
+  r <- genIbans (n-1) m
   let cd = 98 - ibanCheckDigits (cc ++ "00" ++ bban)
       cds = if cd < 10 then "0" ++ show cd else show cd 
   return ((cc ++ cds ++ bban) : r)
