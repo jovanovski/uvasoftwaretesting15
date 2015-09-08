@@ -79,12 +79,12 @@ genIntList m n = do
       return (t:ts)
 
 -- m = number of lists to generate, n = max lenght of list, p = max bound of int
-genPerms :: Int -> Int -> Int -> IO [([Int], [Int], Bool)]
-genPerms 0 _ _ = return []
-genPerms m n p = do 
+genPermTestCases :: Int -> Int -> Int -> IO [([Int], [Int], Bool)]
+genPermTestCases 0 _ _ = return []
+genPermTestCases m n p = do 
   r <- genIntList n p
   s <- (shuffle r)
-  t <- genPerms (m-1) n p
+  t <- genPermTestCases (m-1) n p
   u <- getRandomInt 1
   if length r == 0 || u == 0 then return ((r, s, True) : t)
   else 
@@ -112,17 +112,18 @@ changeAtRandom ys@(x:xs) = do
 
 autoTestIsPermutation :: IO ()
 autoTestIsPermutation = do
-  xs <- genPerms 100 10 20
+  xs <- genPermTestCases 100 10 20
   helper xs where
     helper [] = print "All tests passed"
     helper ((a,b,r):ys) = 
-      if isPermutation a b == r then
-        do
-          print ("pass on: " ++ show a ++ " is permutation of " ++ show b ++ " = " ++ if r then "True" else "False")
-          helper ys
-      else
-        do 
-          print ("failed on: " ++ show a ++ " is a permutation of " ++ show b ++ " = " ++ if r then "True" else "False")
+      let msg  = show a ++ " is " ++ (if r then "" else "not ") ++ "a permutation of " ++ show b
+      in  if isPermutation a b == r then
+            do
+              print ("pass on: " ++ msg)
+              helper ys
+          else
+            do 
+              print ("failed on: " ++ msg)
 
 isDerangement :: Eq a => [a] -> [a] -> Bool
 isDerangement [] [] = True
@@ -179,15 +180,16 @@ ibanTests = [Test "iban test" testIban
   ]
 
 -- arguments: n = number of ibans to generate, m = bban length
-genIbans :: Int -> Int -> IO ([String])
-genIbans 0 _ = return []
-genIbans n m = do
+genIbanTestCases :: Int -> Int -> IO [(String, Bool)]
+genIbanTestCases 0 _ = return []
+genIbanTestCases n m = do
   cc <- genAlphanumericList 2
-  bban <- genAlphanumericList m
-  r <- genIbans (n-1) m
+  l <- getRandomInt m
+  bban <- genAlphanumericList l
+  r <- genIbanTestCases (n-1) m
   let cd = 98 - ibanCheckDigits (cc ++ "00" ++ bban)
       cds = if cd < 10 then "0" ++ show cd else show cd 
-  return ((cc ++ cds ++ bban) : r)
+  return ((cc ++ cds ++ bban, True) : r)
 
 genAlphanumericList :: Int -> IO String
 genAlphanumericList 0 = return ""
@@ -198,8 +200,25 @@ genAlphanumericList n = do
 
 getRandomAlphanumeric :: IO Char
 getRandomAlphanumeric = do
-  x <- getRandomInt 36
+  x <- getRandomInt 35
   return (if x < 10 then intToDigit x else chr (x + 55))
+
+
+autoTestIban :: IO ()
+autoTestIban = do
+  xs <- genIbanTestCases 100 10
+  helper xs where
+    helper [] = print "All tests passed"
+    helper ((a,r):ys) = 
+      let msg = show a ++ " is " ++ (if r then "" else "not ") ++ "a valid iban"
+      in  if iban a == r then
+            do
+              print ("pass on: " ++ msg)
+              helper ys
+          else
+            do 
+              print ("failed on: " ++ msg)
+
 
 allTests = concat [
     triangleTests,
