@@ -155,9 +155,12 @@ isDerangementTests = [Test "is derangement test" testIsDerangement
   ]
 
 iban :: String -> Bool
-iban s = 
+iban s = ibanCheckDigits s == 1
+  
+ibanCheckDigits :: String -> Integer
+ibanCheckDigits s = 
   let sf = filter isAlphaNum s
-  in (read (foldr (++) "" [if isNumber x then x:"" else show (ord (toLower x) - 87) | x <- (drop 4 sf) ++ (take 4 sf)])) `mod` 97 == 1
+  in (read (foldr (++) "" [if isNumber x then x:"" else show (ord (toLower x) - 87) | x <- (drop 4 sf) ++ (take 4 sf)])) `mod` 97
 
 testIban :: (String,Bool) -> Bool
 testIban (a,b) = iban a == b
@@ -175,6 +178,27 @@ ibanTests = [Test "iban test" testIban
     ]
   ]
 
+genIbans :: Int -> IO ([String])
+genIbans 0 = return []
+genIbans n = do
+  cc <- genAlphanumericList 2
+  bban <- genAlphanumericList 14
+  r <- genIbans (n-1)
+  let cd = 98 - ibanCheckDigits (cc ++ "00" ++ bban)
+      cds = if cd < 10 then "0" ++ show cd else show cd 
+  return ((cc ++ cds ++ bban) : r)
+
+genAlphanumericList :: Int -> IO String
+genAlphanumericList 0 = return ""
+genAlphanumericList n = do
+  o <- getRandomAlphanumeric 
+  p <- genAlphanumericList (n-1)
+  return (o : p)
+
+getRandomAlphanumeric :: IO Char
+getRandomAlphanumeric = do
+  x <- getRandomInt 36
+  return (if x < 10 then intToDigit x else chr (x + 55))
 
 allTests = concat [
     triangleTests,
