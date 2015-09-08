@@ -78,7 +78,7 @@ genIntList m n = do
       ts <- genIntListL (r-1)
       return (t:ts)
 
--- m = number of lists to generate, n = max lenght of list, p = max bound of int
+-- m = number of lists to generate, n = max length of list, p = max bound of int
 genPermTestCases :: Int -> Int -> Int -> IO [([Int], [Int], Bool)]
 genPermTestCases 0 _ _ = return []
 genPermTestCases m n p = do 
@@ -157,11 +157,20 @@ isDerangementTests = [Test "is derangement test" testIsDerangement
 
 iban :: String -> Bool
 iban s = ibanCheckDigits s == 1
-  
+
 ibanCheckDigits :: String -> Integer
-ibanCheckDigits s = 
-  let sf = filter isAlphaNum s
-  in (read (foldr (++) "" [if isNumber x then x:"" else show (ord (toLower x) - 87) | x <- (drop 4 sf) ++ (take 4 sf)])) `mod` 97
+ibanCheckDigits s = (convertIbanToInteger $ rearrangeIban $ filterNonAlphaNumeric s) `mod` 97
+
+filterNonAlphaNumeric :: String -> String
+filterNonAlphaNumeric = filter isAlphaNum
+
+rearrangeIban :: String -> String
+rearrangeIban s = 
+  let (f,l) = splitAt 4 s 
+  in  l ++ f
+
+convertIbanToInteger :: String -> Integer
+convertIbanToInteger s = read $ foldr (++) "" [ if isNumber x then x:"" else show $ (ord $ toLower x) - 87 | x <- s ]
 
 testIban :: (String,Bool) -> Bool
 testIban (a,b) = iban a == b
@@ -179,7 +188,7 @@ ibanTests = [Test "iban test" testIban
     ]
   ]
 
--- arguments: n = number of ibans to generate, m = bban length
+-- arguments: n = number of ibans to generate, m = max bban length
 genIbanTestCases :: Int -> Int -> IO [(String, Bool)]
 genIbanTestCases 0 _ = return []
 genIbanTestCases n m = do
@@ -202,7 +211,6 @@ getRandomAlphanumeric :: IO Char
 getRandomAlphanumeric = do
   x <- getRandomInt 35
   return (if x < 10 then intToDigit x else chr (x + 55))
-
 
 autoTestIban :: IO ()
 autoTestIban = do
