@@ -2,6 +2,7 @@ module Permutations where
 
 import Data.List
 import System.Random
+import Testing
 
 isPermutation :: Eq a => [a] -> [a] -> Bool
 isPermutation [] [] = True
@@ -25,10 +26,10 @@ checkLength :: [Integer] -> [Integer] -> Bool
 checkLength [] [] = True
 checkLength xs ys = length xs == length ys
 
----
+--- TESTING
 
-runTest :: IO Bool
-runTest = do
+runMyTest :: IO Bool
+runMyTest = do
 	rn <- randomRIO (2,8)
 	print ("Random selected list length: " ++ (show rn))
 	rnElem <- randomRIO (0, (rn-1))
@@ -47,7 +48,6 @@ generateRndList n = do
     rs <- randomRIO (-100, 100)
     perms <- generateRndList (n-1)
     return (rs:perms)
- 
 
 --time needed 2h 
---TODO tests
+--couldn't use Test syntaxt because of IO bool return type

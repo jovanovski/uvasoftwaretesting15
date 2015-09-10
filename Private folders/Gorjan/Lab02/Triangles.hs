@@ -1,6 +1,7 @@
 module Triangles where
 
 import Data.List
+import Testing
 
 data Shape = NoTriangle | Equilateral 
            | Isosceles  | Rectangular | Other deriving (Eq,Show)
@@ -16,18 +17,35 @@ triangle x y z 	| x<0 || y<0 || z<0 = NoTriangle
 				| x==y || x == z || y == z = Isosceles
 				| otherwise = Other
 
+-- TESTING
 
-notriangles = [[0,0,0], [0,0,1], [0,-1,20],[-3,-4,-5]]
-equilateraltriangles = [[1,1,1],[22,22,22],[3,3,3],[43,43,43]]
-isoscelestriangles = [[2,2,3],[4,2,4],[5,5,1],[2,6,6],[0,0,1]]
-rectangulartirangles = [[3,4,5],[5,12,13],[6,8,10],[7,24,25]]
+testTriangles :: ([Integer], Shape) -> Bool
+testTriangles (xs, s) = triangle (xs!!0) (xs!!1) (xs!!2) == s
 
-testTriangles :: [[Integer]] -> Shape -> IO Bool
-testTriangles [] _ = do return True
-testTriangles (x:xs) s = if triangle (x!!0) (x!!1) (x!!2) == s then testTriangles xs s
-							else do
-							print ("failed on " ++ show x)
-							return False 
+noTriangleTests :: [Test]
+noTriangleTests = [ Test "testing notriangles " testTriangles
+             [([0,0,0], NoTriangle), ([0,0,1], NoTriangle), ([0,-1,20], NoTriangle), ([-3,-4,-5], NoTriangle),([2,2,6],NoTriangle)]
+           ]
+equilateralTests :: [Test]
+equilateralTests = [ Test "testing equilateral triangles " testTriangles
+             [([1,1,1],Equilateral),([22,22,22],Equilateral),([3,3,3],Equilateral),([43,43,43],Equilateral)]
+           ]
+isoscelesTests :: [Test]
+isoscelesTests = [ Test "testing isosceles triangles " testTriangles
+             [([2,2,3],Isosceles),([2,4,2],Isosceles),([5,5,1],Isosceles)]
+           ]
 
--- time ~ 10 min
+rectangularTests :: [Test]
+rectangularTests = [ Test "testing rectangular triangles " testTriangles
+             [([3,4,5],Rectangular),([5,12,13],Rectangular),([6,8,10],Rectangular),([7,24,25],Rectangular)]
+           ]
+
+allTests :: [Test]
+allTests = concat [ noTriangleTests
+                  , equilateralTests
+                  , isoscelesTests
+                  , rectangularTests
+
+                  ]
+-- time ~ 15 min
 -- tested using special function and pregenerated test cases
