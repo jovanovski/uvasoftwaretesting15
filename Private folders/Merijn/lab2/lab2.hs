@@ -164,12 +164,45 @@ isDerangementTests = [Test "is derangement test" testIsDerangement
     ]
   ]
 
+derange :: [a] -> IO [a]
+derange [] = return [] 
+derange [x] = error "no derangement possible"
+derange xs = helper xs 0 where 
+  helper xs n = 
+    let l = length xs
+    in 
+      if n == l then 
+        return $ xs
+      else 
+        do 
+          r <- rsInt n (l-1)
+          let p = xs !! n
+              q = xs !! r
+              ys = splice r 1 [] (splice n 1 [q] xs)
+          do 
+            sub <- helper ys (n+1)
+            return (splice r 0 [p] sub)
+            
+rsInt :: Int -> Int -> IO Int 
+rsInt n m = 
+  do 
+    r <- getRandomInt m
+    if r /= n then 
+      return r 
+    else
+      do 
+        sub <- rsInt n m 
+        return sub
+
+splice :: Int -> Int -> [a] -> [a] -> [a]
+splice p r a l = (take p l) ++ a ++ (drop (p+r) l)
+
 -- END Recognizing and generating derangements`
 --
 -- Automating test process: It is difficult to automate this test process in a useful way because generating 
 -- derangements uses the isDerangement function internally. Of course this could be rewritten to not use the 
 -- isDerangement function itself but only it's internal functionality, but this would not change much about 
--- the usefulness.
+-- the usefulness. 
 -- 
 -- time taken: 15m
 
