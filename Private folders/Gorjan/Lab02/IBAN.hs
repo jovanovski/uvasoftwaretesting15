@@ -121,8 +121,14 @@ ibanTests = [ Test "testing ibans " testFunctions
 				("A07 0331 2345 6789 0123 456", False),
 				("AAE07 0331 2345 6789 0123 456", False),
 				("AE07 0331 2345 6789 0123 4564 4458 4557", False),
-				("AE07 033", False)]
+				("AE07 033", True)]
 				           ]
 
 
 --time needed 2h
+--testrepot:
+--	*IBAN> runTests ibanTests
+--[]
+--if last iban changed to expect true:
+--	*IBAN> runTests ibanTests
+--[Failed Test "testing ibans " on inputs [("AE07 033",True)]]

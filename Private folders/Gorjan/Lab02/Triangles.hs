@@ -49,3 +49,6 @@ allTests = concat [ noTriangleTests
                   ]
 -- time ~ 15 min
 -- tested using special function and pregenerated test cases
+--testreport:
+--  *Triangles> runTests allTests
+--[]

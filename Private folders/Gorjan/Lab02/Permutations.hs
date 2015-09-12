@@ -28,7 +28,7 @@ checkLength xs ys = length xs == length ys
 
 --- TESTING
 
-runMyTest :: IO Bool
+runMyTest :: IO String
 runMyTest = do
 	rn <- randomRIO (2,8)
 	print ("Random selected list length: " ++ (show rn))
@@ -40,7 +40,8 @@ runMyTest = do
 	let result = isPermutation rnd (perms!!rnElem)
 	let result2 = isPermutation2 rnd (perms!!rnElem)
 	let final = result == result2
-	return final
+	let output = "Do they match: " ++ (show final)
+	return output
 
 generateRndList :: Int -> IO [Int]
 generateRndList 0 = return []
@@ -51,3 +52,19 @@ generateRndList n = do
 
 --time needed 2h 
 --couldn't use Test syntaxt because of IO bool return type
+--testreport:
+--*Permutations> runMyTest
+--"Random selected list length: 8"
+--"Random generated list: [-90,-4,54,-100,20,-39,72,-84]"
+--"Random selected permutation: [54,-100,-4,-90,20,-39,72,-84]"
+--"Do they match: True"
+--*Permutations> runMyTest
+--"Random selected list length: 4"
+--"Random generated list: [17,-41,-40,74]"
+--"Random selected permutation: [-41,17,-40,74]"
+--"Do they match: True"
+--*Permutations> runMyTest
+--"Random selected list length: 4"
+--"Random generated list: [17,-41,-40,74]"
+--"Random selected permutation: [-41,17,-40,74]"
+--"Do they match: True"

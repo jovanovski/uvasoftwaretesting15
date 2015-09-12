@@ -33,3 +33,6 @@ derangementsTests = [ Test "testing derangements " testFunctions
            ]
 
 --time needed : 15 minutes
+--testrepot:
+-- *Dearr> runTests derangementsTests
+--[]
