@@ -50,6 +50,69 @@ isOKInput [] = False
 isOKInput x = if checkAllUpper x && checkStart x && checkAN x && checkLenght x then True else False
 
 
+{-- 
+more efficient solution which doesnt go through the given string more times to check if it is valid or not. That it the only difference.
+Checks in this solution lacks unit test principle.
+Main function is iban 
+
+minLength = 12
+maxLength = 32
+
+iban :: String -> Bool
+iban s =  step4 $ step3 $ step23 $ step1 $ isIbanForm $ (delSpaces s)
+
+step1 :: String -> String
+step1 (a:b:c:d:xs) = xs++a:b:c:d:[]
+step1 (xs) = xs
+
+step23 :: String -> String
+step23 "" = ""
+step23 (x:xs) = (show (convertToInt x))++(step23 xs)
+
+convertToInt:: Char -> Int
+convertToInt c  | o < 0 = o + 17	
+				| otherwise = o + 10
+					where o = ord c - 65
+
+step3 :: String -> Integer
+step3 s = read s
+
+step4 :: Integer -> Bool
+step4 n = n `mod` 97 == 1
+
+delSpaces :: String -> String
+delSpaces "" = ""
+delSpaces (' ':xs) = delSpaces xs
+delSpaces (x:xs) = x:(delSpaces xs)
+
+inRange :: Integer -> Integer -> Integer -> Bool
+inRange l h val | l <= val && val < h = True
+				| otherwise = False
+
+inRangeInt :: Int -> Int -> Int -> Bool
+inRangeInt l h val | l <= val && val < h = True
+				| otherwise = False
+
+isIbanForm :: String -> String
+isIbanForm s = if (hasCountryLett s) then (isIbanForm' s 0) else "" 
+
+hasCountryLett :: String -> Bool
+hasCountryLett "" = False
+hasCountryLett (x:(y:xs)) = (isUpperCase x) && (isUpperCase y)
+hasCountryLett (xs) = False
+
+isLowerCase :: Char -> Bool
+isLowerCase c = inRangeInt 92 123 (ord c)
+
+isUpperCase :: Char -> Bool
+isUpperCase c = inRangeInt 65 92 (ord c)
+
+isIbanForm' :: String -> Integer -> String
+isIbanForm' "" len = if inRange minLength maxLength len then "" else ("The lenght of given string is not in a valid range.")
+isIbanForm' (x:xs) len	| isAlphaNum x && not(isLowerCase x) = x:(isIbanForm' xs (len+1))
+						| otherwise = error (x:" is not acceptable IBAN character.")
+--}
+
 --- TESTING
 
 doCheck :: String -> Bool
