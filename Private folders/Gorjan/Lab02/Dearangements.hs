@@ -5,6 +5,8 @@ import Testing
 
 isDerangement :: [Integer] -> [Integer] -> Bool
 isDerangement [] [] = True
+isDerangement [] _ = False
+isDerangement _ [] = False
 isDerangement (x:xs) (y:ys) = if x/=y then isDerangement xs ys else False
 
 
@@ -16,6 +18,7 @@ derangements xs = filter (and . zipWith (/=) xs) $ permutations xs
 
 checkInput :: Integer -> Bool
 checkInput n = n>=0
+
 
 ---
 
