@@ -2,6 +2,7 @@ module Ex1 where
 
 import Lecture3
 import Data.List
+import Test.QuickCheck
 
 myForm1 = Cnj [p, Neg p]
 
@@ -12,6 +13,9 @@ myForm3b = Dsj [(Neg p), q]
 
 myForm4a = Impl p q
 myForm4b = Impl (Neg q) (Neg p)
+
+addition :: Integer -> Integer -> Integer
+addition x y = x+y
 
 allVals2 :: Form -> Form -> [Valuation]
 allVals2 f1 f2 = nub [sort(nub(vf++vg)) | vf <- allVals f1, vg <- allVals f2]
