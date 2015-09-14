@@ -53,17 +53,17 @@ generateRndList n = do
 --time needed 2h 
 --couldn't use Test syntaxt because of IO bool return type
 --testreport:
---*Permutations> runMyTest
+-- *Permutations> runMyTest
 --"Random selected list length: 8"
 --"Random generated list: [-90,-4,54,-100,20,-39,72,-84]"
 --"Random selected permutation: [54,-100,-4,-90,20,-39,72,-84]"
 --"Do they match: True"
---*Permutations> runMyTest
+-- *Permutations> runMyTest
 --"Random selected list length: 4"
 --"Random generated list: [17,-41,-40,74]"
 --"Random selected permutation: [-41,17,-40,74]"
 --"Do they match: True"
---*Permutations> runMyTest
+-- *Permutations> runMyTest
 --"Random selected list length: 4"
 --"Random generated list: [17,-41,-40,74]"
 --"Random selected permutation: [-41,17,-40,74]"
