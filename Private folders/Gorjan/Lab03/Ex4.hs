@@ -4,15 +4,28 @@ import Data.List
 import System.Random
 import Testing
 import Lecture3
+import Ex1
+import Ex3
 
 aset = ["1", "2", "3", "4"]
 bset = ["*", "+", "==>", "<=>"]
+
+ioCnfTest :: IO Bool
+ioCnfTest = do
+	generatedForm <- genForm
+	print ("Testing generated form: " ++ generatedForm)
+	let gencnf = cnf generatedForm
+	print ("Generating CNF: " ++ generatedForm)
+	let parsed = parse generatedForm
+	print ("Checking if CNF and parsed original are equivilent...")
+	let output = equiv gencnf (parsed!!0)
+	return output
 
 testParse :: IO String
 testParse = do
 	form <- genForm
 	res <- ioParse form
-	if res then return ("Parsed: " ++ form) else return ("Failed parse on " ++ form)
+	if res then return ("OK, parsed: " ++ form) else return ("Failed parse on " ++ form)
 
 ioParse :: String -> IO Bool
 ioParse xs = do
@@ -34,7 +47,7 @@ genForm = do
 genFrmOrLit :: IO String
 genFrmOrLit = do
 	num <- genNumber 10
-	if num <= 6 then do
+	if num <= 5 then do
 		lit <- genLiteral
 		return lit
 	else do
@@ -43,12 +56,12 @@ genFrmOrLit = do
 
 genLiteral :: IO String
 genLiteral = do
-	num <- genNumber 3
+	num <- genNumber (length aset)
 	let letter = aset!!num
 	sign <- genNumber 1
 	if sign==1 then return ("-"++letter) else return letter
 
 genNumber :: Int -> IO Int
 genNumber n = do
-    rs <- randomRIO (0, n)
+    rs <- randomRIO (0, n-1)
     return rs
