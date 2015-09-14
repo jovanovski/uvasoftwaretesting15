@@ -76,9 +76,18 @@ equivTests = [ Test "equiv tests" testEquiv
     ]
   ]
 
+
+logicalTests = concat [
+    contradictionTests,
+    tautologyTests,
+    entailsTests,
+    equivTests,
+    parseTests
+  ]
+
+
 -- END test logical functions
---
--- time spent: 1.5h
+-- Time spent: 1.5h, tested using `runTests logicalTests`
 
 -- START test parse
 
@@ -95,11 +104,15 @@ parseTests = [ Test "parse tests" testParse
   ]
 
 -- END test parse 
---
--- time spent: 30m
+-- Time spent: 30m, tested using `runTests parseTests`
+
+-- START convert to CNF
 
 toCnf :: Form -> Form
 toCnf f = Cnj [ Dsj [if v then Neg (Prop n) else Prop n | (n,v) <- vs] | vs <- allVals f, evl vs f == False]
+
+-- END convert to CNF 
+-- Time spent: 3h, of which 2,5h trying a method without truth table conversion, which turned out to be way too hard...
 
 instance Arbitrary Form where
   arbitrary = sized arbForm
@@ -122,10 +135,24 @@ arbForm n = oneof [
   ] where 
   subform = arbForm (n `div` 10)
 
-allTests = concat [
-    contradictionTests,
-    tautologyTests,
-    entailsTests,
-    equivTests,
-    parseTests
-  ]
+isCnf :: Form -> Bool 
+isCnf (Cnj fs) = all isCnfClause fs
+isCnf f = isCnfClause f
+
+isCnfClause :: Form -> Bool
+isCnfClause (Dsj fs) = all isCnfLiteral fs
+isCnfClause f = isCnfLiteral f
+
+isCnfLiteral :: Form -> Bool
+isCnfLiteral (Prop _) = True
+isCnfLiteral (Neg (Prop _)) = True
+isCnfLiteral _ = False
+
+testToCnfIsEquiv :: IO ()
+testToCnfIsEquiv = verboseCheck (\x -> equiv x (toCnf x))
+
+testToCnfIsCnf :: IO ()
+testToCnfIsCnf = verboseCheck (\x -> isCnf (toCnf x))
+
+-- END test toCnf 
+-- Time spent: 2h, tested using `testToCnfIsEquiv` and `testToCnfIsCnf`, which i think are the 2 important properties(?)
