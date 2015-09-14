@@ -6,6 +6,8 @@ import Lecture3
 import Testing
 import Test.QuickCheck
 
+-- START logical functions
+
 contradiction :: Form -> Bool
 contradiction f = not (any (\v -> evl v f) (allVals f))
 
@@ -71,9 +73,35 @@ equivTests = [ Test "equiv tests" testEquiv
     ]
   ]
 
+-- END test logical functions
+--
+-- time spent: 1.5h
+
+-- START test parse
+
+testParse :: (String, String) -> Bool
+testParse (s,e) = show (parse s) == e
+
+parseTests :: [Test]
+parseTests = [ Test "parse tests" testParse
+    [
+      ("*(1 +(2 -3))", "[*(1 +(2 -3))]"),
+      ("*(1 +(2 -3)", "[]"),
+      ("*(1 +(2 -3))))", "[*(1 +(2 -3))]")
+    ]
+  ]
+
+-- END test parse 
+--
+-- time spent: 30m
+
+toCnf :: Form -> Form
+toCnf f = Cnj [ Dsj [if v then Neg (Prop n) else Prop n | (n,v) <- vs] | vs <- allVals f, evl vs f == False]
+
 allTests = concat [
     contradictionTests,
     tautologyTests,
     entailsTests,
-    equivTests
+    equivTests,
+    parseTests
   ]
