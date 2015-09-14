@@ -114,6 +114,8 @@ toCnf f = Cnj [ Dsj [if v then Neg (Prop n) else Prop n | (n,v) <- vs] | vs <- a
 -- END convert to CNF 
 -- Time spent: 3h, of which 2,5h trying a method without truth table conversion, which turned out to be way too hard...
 
+-- START test toCnf
+
 instance Arbitrary Form where
   arbitrary = sized arbForm
 
