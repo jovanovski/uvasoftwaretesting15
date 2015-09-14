@@ -5,6 +5,8 @@ import System.Random
 import Lecture3
 import Testing
 import Test.QuickCheck
+import Test.QuickCheck.Gen
+import Control.Monad
 
 -- START logical functions
 
@@ -53,7 +55,8 @@ entailsTests = [ Test "entails tests" testEntails
       (Prop 1, Prop 1, True),
       (Cnj [Prop 1, Prop 2], (Impl (Prop 1) (Prop 2)), True),
       ((Impl (Prop 1) (Prop 2)), Cnj [Prop 1, Prop 2], False),
-      (Prop 1, Neg (Prop 1), False)
+      (Prop 1, Neg (Prop 1), False),
+      (Prop 1, Impl (Prop 2) (Prop 1), True)
     ]
   ]
 
@@ -97,6 +100,27 @@ parseTests = [ Test "parse tests" testParse
 
 toCnf :: Form -> Form
 toCnf f = Cnj [ Dsj [if v then Neg (Prop n) else Prop n | (n,v) <- vs] | vs <- allVals f, evl vs f == False]
+
+instance Arbitrary Form where
+  arbitrary = sized arbForm
+
+arbForm :: Int -> Gen Form
+arbForm 0 = liftM Prop arbitrary
+arbForm n = oneof [
+    liftM Prop arbitrary, 
+    liftM Neg subform, 
+    do 
+      a <- subform
+      b <- subform
+      return $ Cnj [a,b],
+    do 
+      a <- subform
+      b <- subform
+      return $ Dsj [a,b],
+    liftM2 Impl subform subform,
+    liftM2 Equiv subform subform
+  ] where 
+  subform = arbForm (n `div` 10)
 
 allTests = concat [
     contradictionTests,
