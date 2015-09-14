@@ -85,7 +85,7 @@ logicalTests = concat [
   ]
 
 
--- END test logical functions
+-- END logical functions
 -- Time spent: 1.5h, tested using `runTests logicalTests`
 
 -- START test parse
@@ -149,11 +149,29 @@ isCnfLiteral (Prop _) = True
 isCnfLiteral (Neg (Prop _)) = True
 isCnfLiteral _ = False
 
-testToCnfIsEquiv :: IO ()
-testToCnfIsEquiv = verboseCheck (\x -> equiv x (toCnf x))
+prop_ToCnfIsEquiv :: Form -> Bool
+prop_ToCnfIsEquiv f = equiv f (toCnf f)
 
-testToCnfIsCnf :: IO ()
-testToCnfIsCnf = verboseCheck (\x -> isCnf (toCnf x))
+prop_ToCnfIsCnf :: Form -> Bool
+prop_ToCnfIsCnf f = isCnf (toCnf f)
 
 -- END test toCnf 
--- Time spent: 2h, tested using `testToCnfIsEquiv` and `testToCnfIsCnf`, which i think are the 2 important properties(?)
+-- Time spent: 2h, tested using quickCheck for properties `prop_ToCnfIsEquiv` and `prop_ToCnfIsCnf`, which i think are the 2 important properties(?)
+
+-- START bonus - resolutions style theorem proving
+
+type Clause = [Int]
+type Clauses = [Clause]
+
+cnf2cls :: Form -> Clauses
+cnf2cls (Cnj fs) = map cnfClause2cls fs
+cnf2cls f = [cnfClause2cls f]
+
+cnfClause2cls :: Form -> Clause
+cnfClause2cls (Dsj fs) = map cnfLiteral2Cls fs
+cnfClause2cls f = [cnfLiteral2Cls f]
+
+cnfLiteral2Cls :: Form -> Int
+cnfLiteral2Cls (Prop p) = p
+cnfLiteral2Cls (Neg (Prop p)) = -p
+cnfLiteral2Cls _ = error "not cnf"
