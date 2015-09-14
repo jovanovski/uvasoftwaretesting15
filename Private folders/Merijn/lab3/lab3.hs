@@ -5,7 +5,6 @@ import System.Random
 import Lecture3
 import Testing
 import Test.QuickCheck
-import Test.QuickCheck.Gen
 import Control.Monad
 
 -- START logical functions
