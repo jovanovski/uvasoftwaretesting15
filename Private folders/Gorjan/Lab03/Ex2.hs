@@ -20,7 +20,7 @@ parseTests = [ Test "testing parse " testParse
 	           	("((2==>1)", [Impl (Prop 2) (Prop 1)])
 	           	]
             ]
-
+--| Time spent: 1h
 -- | parse fails for single prop in parenthesis
 -- | parse fails for implication without parenthesis
 -- | parse fails for equivilance without parenthesis
