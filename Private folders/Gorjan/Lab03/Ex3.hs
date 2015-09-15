@@ -29,10 +29,12 @@ mDOV :: Valuation -> [Form]
 mDOV [] = []
 mDOV ((i, b):xs) = if b then (Prop i) : mDOV xs else Neg (Prop i) :mDOV xs
 
-	-- | flipVals (falseVals (allVals(parse "*(1 2)"!!0)) (parse "*(1 2)"!!0))
-	-- | take forumula
-	-- | parse formula
-	-- | find truth values
-	-- | find pairs for which eval is false
-	-- | create NOT p or NOT q or NOT r ...
-	-- | create conjuction of them
+-- | Time spent: 30min
+
+-- | Steps taken:
+-- | take forumula
+-- | parse formula
+-- | find truth values
+-- | find pairs for which eval is false
+-- | create NOT p or NOT q or NOT r ...
+-- | create conjuction of them
