@@ -40,7 +40,8 @@ tautologyTests = [ Test "tautology tests" testTautology
   ]
 
 allVals2 :: Form -> Form -> [Valuation]
-allVals2 f g = nub [sort (nub (vf ++ vg)) | vf <- allVals f, vg <- allVals g]
+allVals2 f g = nub [sort (helper (vf ++ vg)) | vf <- allVals f, vg <- allVals g] where 
+  helper ((a,b):cs) = (a,b) : filter (\(x,y) -> x /= a) cs
 
 entails :: Form -> Form -> Bool
 entails f g = all (\v -> not (evl v f) || evl v g) (allVals2 f g)
@@ -80,8 +81,7 @@ logicalTests = concat [
     contradictionTests,
     tautologyTests,
     entailsTests,
-    equivTests,
-    parseTests
+    equivTests
   ]
 
 
@@ -119,9 +119,9 @@ instance Arbitrary Form where
   arbitrary = sized arbForm
 
 arbForm :: Int -> Gen Form
-arbForm 0 = liftM Prop arbitrary
+arbForm 0 = arbProp
 arbForm n = oneof [
-    liftM Prop arbitrary, 
+    arbProp, 
     liftM Neg subform, 
     do 
       a <- subform
@@ -134,7 +134,13 @@ arbForm n = oneof [
     liftM2 Impl subform subform,
     liftM2 Equiv subform subform
   ] where 
-  subform = arbForm (n `div` 10)
+  subform = arbForm (n `div` 2)
+
+-- generator for non-negative properties below 5
+arbProp :: Gen Form
+arbProp = do
+  a <- resize 4 arbitrary
+  return $ Prop (abs a)
 
 isCnf :: Form -> Bool 
 isCnf (Cnj fs) = all isCnfClause fs
@@ -149,9 +155,11 @@ isCnfLiteral (Prop _) = True
 isCnfLiteral (Neg (Prop _)) = True
 isCnfLiteral _ = False
 
+-- Test property - Forms returned by tpCnf should be logically equivalent 
 prop_ToCnfIsEquiv :: Form -> Bool
 prop_ToCnfIsEquiv f = equiv f (toCnf f)
 
+-- Test property - Forms returned by toCnf should be in Cnf form
 prop_ToCnfIsCnf :: Form -> Bool
 prop_ToCnfIsCnf f = isCnf (toCnf f)
 
@@ -168,10 +176,42 @@ cnf2cls (Cnj fs) = map cnfClause2cls fs
 cnf2cls f = [cnfClause2cls f]
 
 cnfClause2cls :: Form -> Clause
-cnfClause2cls (Dsj fs) = map cnfLiteral2Cls fs
-cnfClause2cls f = [cnfLiteral2Cls f]
+cnfClause2cls (Dsj fs) = map cnfNeg2Cls fs
+cnfClause2cls f = [cnfNeg2Cls f]
+
+cnfNeg2Cls :: Form -> Int 
+cnfNeg2Cls (Neg f) = - (cnfLiteral2Cls f)
+cnfNeg2Cls f = cnfLiteral2Cls f
 
 cnfLiteral2Cls :: Form -> Int
-cnfLiteral2Cls (Prop p) = p
-cnfLiteral2Cls (Neg (Prop p)) = -p
+cnfLiteral2Cls (Prop p) 
+  | p == 0 = error "properties cannot have name 0"
+  | otherwise = p
 cnfLiteral2Cls _ = error "not cnf"
+
+-- dual of evl, but for Clauses
+evlClauses :: Valuation -> Clauses -> Bool
+evlClauses v cs = all (evlClause v) cs
+
+evlClause :: Valuation -> Clause -> Bool
+evlClause v c = any (evlLiteral v) c
+
+evlLiteral :: Valuation -> Int -> Bool
+evlLiteral [] l = error ("no info for " ++ show l)
+evlLiteral ((i,b):xs) l
+  | abs l == i = if l > 0 then b else not b
+  | otherwise = evlLiteral xs l
+
+containsProp0 :: Form -> Bool
+containsProp0 (Prop p) = p == 0
+containsProp0 (Neg f) = containsProp0 f
+containsProp0 (Cnj fs) = any containsProp0 fs
+containsProp0 (Dsj fs) = any containsProp0 fs
+containsProp0 (Impl f g) = containsProp0 f || containsProp0 g
+containsProp0 (Equiv f g) = containsProp0 f || containsProp0 g
+
+-- Test property - CNF forms returned by cnf2cls should be logically equivalent to original
+prop_Cnf2ClsFromCnfIsEquiv f = not (containsProp0 f) ==> all (\v -> evl v f == evlClauses v (cnf2cls (toCnf f))) (allVals f)
+
+-- END bonus 
+-- Time spent: 2 h, tested using quickCheck for property `prop_Cnf2ClsFromCnfIsEquiv`
