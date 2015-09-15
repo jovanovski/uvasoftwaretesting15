@@ -200,16 +200,22 @@ cnfLiteral2Cls _ = error "not cnf"
 
 -- dual of evl, but for Clauses
 evlClauses :: Valuation -> Clauses -> Bool
-evlClauses v cs = all (evlClause v) cs where 
-  evlClause v c = any (evlLiteral v) c where 
-    evlLiteral [] l = error ("no info for " ++ show l)
-    evlLiteral ((i,b):xs) l
-      | abs l == i = if l > 0 then b else not b
-      | otherwise = evlLiteral xs l
+evlClauses v cs = all (evlClause v) cs
+
+evlClause :: Valuation -> Clause -> Bool
+evlClause v c = any (evlLiteral v) c 
+
+evlLiteral :: Valuation -> Int -> Bool
+evlLiteral [] l = error ("no info for " ++ show l)
+evlLiteral ((i,b):xs) l
+  | abs l == i = if l > 0 then b else not b
+  | otherwise = evlLiteral xs l
 
 propNamesClauses :: Clauses ->  [Int]
-propNamesClauses cs = nub (foldr (++) [] (map propNamesClause cs)) where 
-  propNamesClause c = map abs c
+propNamesClauses cs = nub (foldr (++) [] (map propNamesClause cs))
+
+propNamesClause :: Clause -> [Int]
+propNamesClause c = map abs c
 
 containsProp0 :: Form -> Bool
 containsProp0 (Prop p) = p == 0
