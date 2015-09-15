@@ -40,8 +40,9 @@ tautologyTests = [ Test "tautology tests" testTautology
   ]
 
 allVals2 :: Form -> Form -> [Valuation]
-allVals2 f g = nub [sort (helper (vf ++ vg)) | vf <- allVals f, vg <- allVals g] where 
-  helper ((a,b):cs) = (a,b) : filter (\(x,y) -> x /= a) cs
+allVals2 f g = nub [sort (removeDuplicateVals (vf ++ vg)) | vf <- allVals f, vg <- allVals g] where 
+  removeDuplicateVals [] = []
+  removeDuplicateVals ((a,b):cs) = (a,b) : removeDuplicateVals (filter (\(x,y) -> x /= a) cs)
 
 entails :: Form -> Form -> Bool
 entails f g = all (\v -> not (evl v f) || evl v g) (allVals2 f g)
@@ -136,11 +137,11 @@ arbForm n = oneof [
   ] where 
   subform = arbForm (n `div` 2)
 
--- generator for non-negative properties below 5
+-- generator for properties 1 - 5
 arbProp :: Gen Form
 arbProp = do
   a <- resize 4 arbitrary
-  return $ Prop (abs a)
+  return $ Prop ((abs a) + 1)
 
 isCnf :: Form -> Bool 
 isCnf (Cnj fs) = all isCnfClause fs
