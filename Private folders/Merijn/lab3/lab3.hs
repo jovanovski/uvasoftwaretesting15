@@ -156,7 +156,7 @@ isCnfLiteral (Prop _) = True
 isCnfLiteral (Neg (Prop _)) = True
 isCnfLiteral _ = False
 
--- Test property - Forms returned by tpCnf should be logically equivalent 
+-- Test property - Forms returned by toCnf should be logically equivalent 
 prop_ToCnfIsEquiv :: Form -> Bool
 prop_ToCnfIsEquiv f = equiv f (toCnf f)
 
@@ -165,7 +165,7 @@ prop_ToCnfIsCnf :: Form -> Bool
 prop_ToCnfIsCnf f = isCnf (toCnf f)
 
 -- END test toCnf 
--- Time spent: 2h, tested using quickCheck for properties `prop_ToCnfIsEquiv` and `prop_ToCnfIsCnf`, which i think are the 2 important properties(?)
+-- Time spent: 2h, tested using quickCheck for properties `prop_ToCnfIsEquiv` & `prop_ToCnfIsCnf`
 
 -- START bonus - resolutions style theorem proving
 
