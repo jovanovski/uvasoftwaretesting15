@@ -32,5 +32,5 @@ entails f1 f2 = all (\ v -> not (evl v f1) || evl v f2) (allVals2 f1 f2)
 equiv :: Form -> Form -> Bool
 equiv f1 f2 = all (\ v -> evl v f1 == evl v f2) (allVals2 f1 f2)
 
--- | time spent: 20 min
+-- | Time spent: 20 min
 -- | checked via prefedined forms (myForm1, myForm2...)
