@@ -192,16 +192,16 @@ cnfLiteral2Cls _ = error "not cnf"
 
 -- dual of evl, but for Clauses
 evlClauses :: Valuation -> Clauses -> Bool
-evlClauses v cs = all (evlClause v) cs
+evlClauses v cs = all (evlClause v) cs where 
+  evlClause v c = any (evlLiteral v) c where 
+    evlLiteral [] l = error ("no info for " ++ show l)
+    evlLiteral ((i,b):xs) l
+      | abs l == i = if l > 0 then b else not b
+      | otherwise = evlLiteral xs l
 
-evlClause :: Valuation -> Clause -> Bool
-evlClause v c = any (evlLiteral v) c
-
-evlLiteral :: Valuation -> Int -> Bool
-evlLiteral [] l = error ("no info for " ++ show l)
-evlLiteral ((i,b):xs) l
-  | abs l == i = if l > 0 then b else not b
-  | otherwise = evlLiteral xs l
+propNamesClauses :: Clauses ->  [Int]
+propNamesClauses cs = nub (foldr (++) [] (map propNamesClause cs)) where 
+  propNamesClause c = map abs c
 
 containsProp0 :: Form -> Bool
 containsProp0 (Prop p) = p == 0
@@ -214,5 +214,10 @@ containsProp0 (Equiv f g) = containsProp0 f || containsProp0 g
 -- Test property - CNF forms returned by cnf2cls should be logically equivalent to original
 prop_Cnf2ClsFromCnfIsEquiv f = not (containsProp0 f) ==> all (\v -> evl v f == evlClauses v (cnf2cls (toCnf f))) (allVals f)
 
+-- Test property - cnf2cls retains same property names as cnf formula
+prop_Cnf2ClsSameProps f = not (containsProp0 f) ==> 
+  let fcnf = (toCnf f)
+  in sort (propNames fcnf) == sort (propNamesClauses (cnf2cls fcnf))
+
 -- END bonus 
--- Time spent: 2 h, tested using quickCheck for property `prop_Cnf2ClsFromCnfIsEquiv`
+-- Time spent: 3 h, tested using quickCheck for properties `prop_Cnf2ClsFromCnfIsEquiv` & `prop_Cnf2ClsSameProps`
