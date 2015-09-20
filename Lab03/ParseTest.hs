@@ -1,35 +1,27 @@
-module ParseTest where 
+module ParseTest where
 
 import Lecture3
 import Testing
 
--- START test parse
 
-testParse :: (String, String) -> Bool
-testParse (s,e) = show (parse s) == e
+testParse :: (String, [Form]) -> Bool
+testParse (s, f) = parse s == f
 
 parseTests :: [Test]
-parseTests = [ Test "parse tests" testParse
-    [
-      ("1", "[1]"),
-      ("(1)", "[1]"),
-      ("*(1 2)", "[*(1 2)]"),
-      ("*((1 2))", "[*(1 2)]"),
-      ("*(1 +(2 -3))", "[*(1 +(2 -3))]"),
-      ("*(1 +(2 -3)", "[]"),
-      ("*(1 +(2 -3))))", "[*(1 +(2 -3))]"),
-      ("+(1 2)", "[+(1 2)]"),
-      ("1==>2", "[1==>2]"),
-      ("(1==>2)", "[1==>2]"),
-      ("((1==>2))", "[1==>2]"),
-      ("1<=>2", "[1<=>2]"),
-      ("(1<=>2)", "[1<=>2]"),
-      ("((1<=>2))", "[1<=>2]")
-    ]
-  ]
-
--- END test parse 
--- Time spent: 1h, tested using `runTests parseTests`. 
--- Test result are not so good:  
---    * Implications and equivalences only work in parentheses
---    * Multiple parentheses are not supported
+parseTests = [ Test "testing parse " testParse
+             [
+              ("*(1  2)))))))", [Cnj [Prop 1, Prop 2]]),
+              ("*(1 -2)", [Cnj [Prop 1, Neg(Prop 2)]]),
+              ("(1)", [Prop 1]),
+              ("2==>1", [Impl (Prop 2) (Prop 1)]),
+              ("2<=>1", [Equiv (Prop 2) (Prop 1)]),
+              ("1", [Prop 1]),
+              ("(2==>1)", [Impl (Prop 2) (Prop 1)]),
+              ("((2==>1)", [Impl (Prop 2) (Prop 1)])
+              ]
+            ]
+--| Time spent: 1h
+-- | parse fails for single prop in parenthesis
+-- | parse fails for implication without parenthesis
+-- | parse fails for equivilance without parenthesis
+-- | parse fails for extra heading parenthesis
