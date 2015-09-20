@@ -7,7 +7,7 @@ import Testing
 
 -- doesnt apply at least for one item (value)
 contradiction :: Form -> Bool
-contradiction f =  any (\ v -> not (evl v f)) (allVals f)
+contradiction f =  any (\ v -> (evl v f)) (allVals f)
 
 -- must be always true for all elements (values)
 -- tautology (Impl (Prop 1) (Impl (Prop 2) (Prop 1)))
@@ -25,9 +25,6 @@ entails p q = all (\ v -> not (evl v q) || (evl v p)) (allVals2 p q)
 
 -- p <=> q == p -> q && q -> p
 -- the entails function is used
---equiv :: Form -> Form -> Bool
---equiv p q =  (entails p q) && (entails q p) 
-
 equiv :: Form -> Form -> Bool
 equiv f g = all (\v -> evl v f == evl v g) (allVals2 f g)
 
@@ -35,6 +32,67 @@ equiv f g = all (\v -> evl v f == evl v g) (allVals2 f g)
 -- REPORT
 estimation time 15min, real time 30 min
 --}
+
+--TESTING
+contradictionTests :: [Test]
+contradictionTests = [ Test "contradiction tests" assertBoolContr
+    [
+      (Cnj [Prop 1, Neg (Prop 1)], True),
+      (Cnj [Dsj [Prop 1, Prop 2], Cnj [Neg (Prop 1), Neg (Prop 2)]], True),
+      (Cnj [Prop 1, Prop 2], False)
+    ]
+  ]
+
+tautologyTests :: [Test]
+tautologyTests = [ Test "tautology tests" assertBoolTaut
+    [
+      (Dsj [Prop 1, Neg (Prop 1)], True),
+      (Cnj [Dsj [Prop 1, Neg (Prop 1) ], Dsj [Prop 2, Neg (Prop 2)] ], True),
+      (Cnj [Prop 1, Prop 2], False)
+    ]
+  ]
+
+
+entailsTests :: [Test]
+entailsTests = [ Test "entails tests" assertBoolEnt
+    [
+      (Prop 1, Prop 1, True),
+      (Cnj [Prop 1, Prop 2], (Impl (Prop 1) (Prop 2)), True),
+      ((Impl (Prop 1) (Prop 2)), Cnj [Prop 1, Prop 2], False),
+      (Prop 1, Neg (Prop 1), False),
+      (Prop 1, Impl (Prop 2) (Prop 1), True)
+    ]
+  ]
+
+
+equivTests :: [Test]
+equivTests = [ Test "equiv tests" assertBoolEq
+    [
+      (Prop 1, Prop 1, True),
+      (Impl (Prop 1) (Prop 2), Dsj [Neg (Prop 1), Prop 2], True),
+      (Prop 1, Prop 2, False),
+      (Cnj [Prop 1, Prop 2], Dsj [Prop 1, Prop 2], False)
+    ]
+  ]
+
+assertBoolTaut :: (Form, Bool) -> Bool
+assertBoolTaut (f,b) = tautology f == b
+
+assertBoolContr :: (Form, Bool) -> Bool
+assertBoolContr (f,b) = contradiction f == b
+
+assertBoolEnt :: (Form, Form, Bool) -> Bool
+assertBoolEnt (f,g,b) = (entails f g) == b
+
+assertBoolEq :: (Form, Form, Bool) -> Bool
+assertBoolEq (f,g,b) = (equiv f g) == b
+
+logicalTests = concat [
+    contradictionTests,
+    tautologyTests,
+    entailsTests,
+    equivTests	
+  ]
 
 ------------------ EX 02 ------------------
 
@@ -67,8 +125,9 @@ testParse = [Test "testing parse" assertEqual
 {--
 -- REPORT
 not really get a point of the exercise, but there are few mistakes with parsing:
-It doesnt take single plain formula = (1); does take equiv and impl without brackets
-Basically two ways of expressing formula are used - prefix and infix.
+* It doesnt take single plain formula = (1); 
+* Doesnt take equiv and impl without brackets
+* two ways of expressing formula are used - prefix and infix.
 --}
 
 
