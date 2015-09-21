@@ -5,8 +5,8 @@ import Data.List
 import System.Random
 import Test.QuickCheck
 import Control.Monad
+import Ex5
 
-type Rel a = [(a,a)]
 
 infixr 5 @@
 
