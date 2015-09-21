@@ -18,9 +18,7 @@ genIntSet = do
   return $ list2set l
 
 instance (Ord a, Arbitrary a) => Arbitrary (Set a) where 
-  arbitrary = do
-    a <- arbitrary
-    return $ list2set a
+  arbitrary = liftM list2set arbitrary
 
 -- END random set generator 
 -- Time taken 30m, tested using `genIntSet 50 50` and `sample $ (arbitrary :: Gen (Set Int))`
@@ -162,6 +160,31 @@ While first taking the symmetric closure and then the transitive closure leads t
 
 -- START Bonus - show Function
 
+instance Show Expr where 
+  show e = case e of 
+    (I i) -> show i
+    (V v) -> v
+    (Add a b) -> "(" ++ (show a) ++ ") + (" ++ (show b) ++ ")"
+    (Subtr a b) -> "(" ++ (show a) ++ ") - (" ++ (show b) ++ ")"
+    (Mult a b) -> "(" ++ (show a) ++ ") * (" ++ (show b) ++ ")"
+
+instance Show Condition where 
+  show c = case c of 
+    (Prp v) -> show v
+    (Eq a b) -> "(" ++ show a ++ ") == (" ++ show b ++ ")"
+    (Lt a b) -> "(" ++ show a ++ ") < (" ++ show b ++ ")"
+    (Gt a b) -> "(" ++ show a ++ ") > (" ++ show b ++ ")"
+    (Ng a) -> "!(" ++ show a ++ ")"
+    (Cj cs) -> "(" ++ intercalate ") && (" (map show cs) ++ ")"
+    (Dj cs) -> "(" ++ intercalate ") || (" (map show cs) ++ ")"
+
+instance Show Statement where 
+  show s = case s of 
+    (Ass v e) -> v ++ " = " ++ (show e)
+    (Cond c t f) -> "if (" ++ (show c) ++ ") {\n" ++ (show t) ++ "\n} else {\n" ++ (show f) ++ "\n}\n"
+    (Seq sts) -> intercalate ";\n" (map show sts)
+    (While c b) -> "while (" ++ (show c) ++ ") {\n" ++ (show b) ++ "\n}\n"
+
 arbI :: Gen Expr
 arbI = liftM I (resize 5 arbitrary)
 
@@ -229,22 +252,72 @@ arbCondition n vs = case n of
     subExpr = arbExpr (n `div` 2) vs
     subCondition = arbCondition (n `div` 2) vs
 
---arbStatement :: Int -> Gen Statement
---arbStatement n = case n of 
---  0 -> oneof [
---      abrAss,
---      liftM3 Cond arbitrary subStatement subStatement,
---      liftM Seq (listOf subStatement),
---      liftM2 While arbitrary subStatement
---    ] 
---  n -> oneof [
---      abrAss,
---      liftM3 Cond arbitrary subStatement subStatement,
---      liftM Seq (listOf subStatement),
---      liftM2 While arbitrary subStatement
---    ] 
---  where 
---    subStatement = arbStatement (n `div` 2)
---    subCondition = arbCondition (n `div` 2)
+arbVar :: Gen String  
+arbVar = elements ["a", "b", "c", "d"]
+
+arbStatementListS :: Int -> [String] -> Int -> Gen [Statement]
+arbStatementListS n vs 0 = return []
+arbStatementListS n vs l = case n of 
+  0 -> return []
+  n -> oneof [
+      do 
+        v <- arbVar
+        se <- subExpr
+        sl <- (arbStatementListS (n `div` 2) (v:vs) (l-1))
+        return $ (Ass v se):sl,
+      do 
+        c <- subCondition
+        t <- subStatementV
+        f <- subStatementV
+        sl <- subStatementListS
+        return $ (Cond c t f):sl,
+      do
+        sl1 <- subStatementListS
+        sl2 <- subStatementListS
+        return $ (Seq sl1):sl2,
+      do 
+        c <- subCondition
+        s <- subStatementV
+        sl <- subStatementListS
+        return $ (While c s):sl
+    ]
+  where 
+    subExpr = arbExpr (n `div` 2) vs
+    subStatementV = arbStatementV (n `div` 2) vs
+    subStatementListS = arbStatementListS (n `div` 2) vs (l-1)
+    subCondition = arbCondition (n `div` 2) vs
+
+arbStatementList :: Int -> [String] -> Gen [Statement]
+arbStatementList n vs = do
+  s <- resize 4 arbitrary
+  l <- arbStatementListS n vs (abs s)
+  return l 
+
+arbAss :: Int -> [String] -> Gen Statement
+arbAss n vs = liftM2 Ass arbVar (arbExpr n vs)
+
+arbStatementV :: Int -> [String] -> Gen Statement
+arbStatementV n vs = case n of 
+  0 -> subAss
+  n -> oneof [
+      subAss,
+      liftM3 Cond subCondition subStatementV subStatementV,
+      liftM Seq subStatementList,
+      liftM2 While subCondition subStatementV
+    ]
+  where
+    subAss = (arbAss (n `div` 2) vs)
+    subStatementV = arbStatementV (n `div` 2) vs
+    subStatementList = arbStatementList (n `div` 2) vs
+    subCondition = arbCondition (n `div` 2) vs
+
+arbStatement :: Int -> Gen Statement
+arbStatement n = arbStatementV n []
+
+instance Arbitrary Statement where 
+  arbitrary = sized arbStatement
+
+--prop_StatementEvaluates :: Statement -> Bool
+--prop_StatementEvaluates s = (exec initEnv s) == 0 || True
 
 -- END Bonus - show function
