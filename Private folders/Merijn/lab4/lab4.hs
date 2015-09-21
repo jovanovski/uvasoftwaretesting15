@@ -6,7 +6,8 @@ import System.Random
 import Test.QuickCheck
 import Control.Monad
 import Data.List
-import Data.Function
+-- import Data.Function -- using fix function definition from lecture
+import Lecture4
 
 -- START random set generator
 
@@ -143,7 +144,7 @@ prop_SymTrClosIsTrSymClos r = let stc = symClos $ trClos r; tsc = trClos $ symCl
 
 {-
 They are NOT the same - the transitive closure of a symmetric closure is also reflexive, while a symmetric 
-closure of a transitive closure does not need to be so. An example would be: 
+closure of a transitive closure does not need to be so (because of isolated points). An example would be: 
 
   [(1,0)]
 
@@ -159,3 +160,91 @@ While first taking the symmetric closure and then the transitive closure leads t
 -- END sym tr clos is tr sym clos
 -- Time taken 30m 
 
+-- START Bonus - show Function
+
+arbI :: Gen Expr
+arbI = liftM I (resize 5 arbitrary)
+
+arbV :: [String] -> Gen Expr
+arbV vs = liftM V (elements vs)
+
+arbExpr :: Int -> [String] -> Gen Expr
+arbExpr 0 [] = arbI
+arbExpr 0 vs = oneof [arbI, arbV vs]
+arbExpr n vs = 
+  case n of 
+    0 -> case vs of 
+      [] -> arbI
+      vs -> oneof [arbI, arbV vs]
+    n -> case vs of 
+      [] -> oneof [
+          arbI,
+          liftM2 Add subExpr subExpr,
+          liftM2 Subtr subExpr subExpr,
+          liftM2 Mult subExpr subExpr
+        ]
+      vs ->  oneof [
+          arbI,
+          arbV vs,
+          liftM2 Add subExpr subExpr,
+          liftM2 Subtr subExpr subExpr,
+          liftM2 Mult subExpr subExpr
+        ]
+  where 
+    subExpr = arbExpr (n `div` 2) vs
+
+arbCondition :: Int -> [String] -> Gen Condition
+arbCondition n vs = case n of 
+  0 -> case vs of 
+    [] -> oneof [
+        liftM2 Eq subExpr subExpr,
+        liftM2 Lt subExpr subExpr,
+        liftM2 Gt subExpr subExpr
+      ]
+    vs -> oneof [
+        liftM Prp (elements vs),
+        liftM2 Eq subExpr subExpr,
+        liftM2 Lt subExpr subExpr,
+        liftM2 Gt subExpr subExpr
+      ]
+  n -> case vs of
+    [] -> oneof [
+        liftM2 Eq subExpr subExpr,
+        liftM2 Lt subExpr subExpr,
+        liftM2 Gt subExpr subExpr,
+        liftM Ng subCondition,
+        liftM Cj (listOf subCondition),
+        liftM Dj (listOf subCondition)
+      ]
+    vs -> oneof [
+        liftM Prp (elements vs),
+        liftM2 Eq subExpr subExpr,
+        liftM2 Lt subExpr subExpr,
+        liftM2 Gt subExpr subExpr,
+        liftM Ng subCondition,
+        liftM Cj (listOf subCondition),
+        liftM Dj (listOf subCondition)
+      ] 
+  where 
+    subExpr = arbExpr (n `div` 2) vs
+    subCondition = arbCondition (n `div` 2) vs
+
+--arbStatement :: Int -> Gen Statement
+--arbStatement n = case n of 
+--  0 -> oneof [
+--      abrAss,
+--      liftM3 Cond arbitrary subStatement subStatement,
+--      liftM Seq (listOf subStatement),
+--      liftM2 While arbitrary subStatement
+--    ] 
+--  n -> oneof [
+--      abrAss,
+--      liftM3 Cond arbitrary subStatement subStatement,
+--      liftM Seq (listOf subStatement),
+--      liftM2 While arbitrary subStatement
+--    ] 
+--  where 
+--    subStatement = arbStatement (n `div` 2)
+--    subCondition = arbCondition (n `div` 2)
+
+-- END Bonus - show function
