@@ -6,6 +6,7 @@ import System.Random
 import Test.QuickCheck
 import Control.Monad
 import Data.List
+import Data.Function
 
 -- START random set generator
 
@@ -97,9 +98,42 @@ testDifferenceSet n = testSetProp2 (\f g -> (prop_DifferenceElementsNotInOther f
 type Rel a = [(a, a)]
 
 symClos :: Ord a => Rel a -> Rel a
-symClos [] = []
-symClos ((a,b):rs) = 
-  let x = (b,a)
-  in [(a,b), x] ++ (symClos (delete x rs))
+symClos rs = sort $ nub $ symClos' rs
 
--- END 
+symClos' :: Ord a => Rel a -> Rel a
+symClos' [] = []
+symClos' ((a,b):rs) = (a,b):(b,a):(symClos' rs)
+
+-- END symClos
+-- Time taken 15m
+
+infixr 5 @@
+
+(@@) :: Eq a => Rel a -> Rel a -> Rel a
+r @@ s = nub [ (x,z) | (x,y) <- r, (w,z) <- s, y == w ]
+
+trClos :: Ord a => Rel a -> Rel a
+trClos [] = []
+trClos rs = fix (\f rs -> let cs = sort $ nub (rs ++ (rs @@ rs)) in if rs == cs then rs else f cs) rs
+
+-- END trClos,
+-- Time taken 1h
+
+-- START Testing symClos & trClos
+
+prop_SymClosIsSymmetric :: Rel Int -> Bool
+prop_SymClosIsSymmetric r = let c = symClos r in all (\(a,b) -> (b,a) `elem` c) c
+
+prop_SymClosContainsOriginal :: Rel Int -> Bool
+prop_SymClosContainsOriginal r = let c = symClos r in all (\x -> x `elem` c) r
+
+prop_TrClosIsTransitive :: Rel Int -> Bool
+prop_TrClosIsTransitive r = let c = trClos r in all (\v -> v `elem` c) [((x,u)) | (x,y) <- c, (z,u) <- c, y == z]
+
+prop_TrClosContainsOriginal :: Rel Int -> Bool
+prop_TrClosContainsOriginal r = let c = trClos r in all (\x -> x `elem` c) r
+
+-- END Testing symClos & trClos
+-- Time taken 20m - tested uing quickcheck
+
+-- START 
