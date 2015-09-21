@@ -39,3 +39,5 @@ prop_diffSet :: Set Integer -> Set Integer -> Bool
 prop_diffSet x z = all (\y -> inSet y x && not (inSet y z)) (diffSet x z)
 
 ---
+
+--time spent: 30 min
