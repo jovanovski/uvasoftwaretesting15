@@ -35,7 +35,7 @@ To implement variable assignment we need a datatype for expressions, for the ass
 >           | Add Expr Expr 
 >           | Subtr Expr Expr 
 >           | Mult Expr Expr 
->           deriving (Eq,Show)
+>           deriving (Eq)
 
 Evaluation of an expression in an environment
 
@@ -90,7 +90,7 @@ Conditions:
 >                | Ng Condition 
 >                | Cj [Condition] 
 >                | Dj [Condition]
->                deriving (Eq,Show)
+>                deriving (Eq)
 
 Statements:
 
@@ -98,7 +98,7 @@ Statements:
 >                | Cond Condition Statement Statement
 >                | Seq [Statement]
 >                | While Condition Statement
->                deriving (Eq,Show)
+>                deriving (Eq)
 
 Condition Evaluation
 
