@@ -38,15 +38,18 @@ testSetProp2 p n = do
     testSetProp2 p (n-1)
   else error $ "Failed on " ++ s
 
+instance Foldable (Set) where
+  foldr f s (Set l) = foldr f s l
+
 prop_UnionHasAllElements :: Set Int -> Set Int -> Bool
-prop_UnionHasAllElements f@(Set fs) g@(Set gs) = 
+prop_UnionHasAllElements f g = 
   let u = unionSet f g
-  in (all (\x -> inSet x u) fs) && (all (\x -> inSet x u) gs)
+  in (all (\x -> inSet x u) f) && (all (\x -> inSet x u) g)
 
 prop_UnionHasOnlyElements :: Set Int -> Set Int -> Bool
-prop_UnionHasOnlyElements f@(Set fs) g@(Set gs) = 
-  let (Set us) = unionSet f g
-  in all (\x -> (x `elem` fs) || (x `elem` gs)) us 
+prop_UnionHasOnlyElements f g = 
+  let u = unionSet f g
+  in all (\x -> (x `elem` f) || (x `elem` g)) u
 
 -- test using own set generator
 testUnionSet :: Int -> IO ()
@@ -57,13 +60,13 @@ intersectionSet (Set xs) (Set ys) = list2set $ xs `intersect` ys
 
 prop_IntersectionElementsInBoth :: Set Int -> Set Int -> Bool
 prop_IntersectionElementsInBoth f g = 
-  let (Set is) = intersectionSet f g
-  in all (\x -> (inSet x f) && (inSet x g)) is
+  let i = intersectionSet f g
+  in all (\x -> (inSet x f) && (inSet x g)) i
 
 prop_IntersectionHasAllElements :: Set Int -> Set Int -> Bool
-prop_IntersectionHasAllElements f@(Set fs) g@(Set gs) = 
+prop_IntersectionHasAllElements f g = 
   let i = intersectionSet f g
-  in all (\x -> if x `elem` gs then inSet x i else True) fs
+  in all (\x -> if x `elem` g then inSet x i else True) f
 
 testIntersectionSet :: Int -> IO () 
 testIntersectionSet n = testSetProp2 (\f g -> (prop_IntersectionElementsInBoth f g) && (prop_IntersectionHasAllElements f g)) n
@@ -73,13 +76,13 @@ differenceSet (Set xs) (Set ys) = list2set $ xs \\ ys
 
 prop_DifferenceElementsNotInOther :: Set Int -> Set Int -> Bool
 prop_DifferenceElementsNotInOther f g = 
-  let (Set ds) = differenceSet f g
-  in all (\x -> not (inSet x g)) ds
+  let d = differenceSet f g
+  in all (\x -> not (inSet x g)) d
 
 prop_DifferenceHasAllElements :: Set Int -> Set Int -> Bool
-prop_DifferenceHasAllElements f@(Set fs) g@(Set gs) = 
+prop_DifferenceHasAllElements f g = 
   let d = differenceSet f g
-  in all (\x -> if not (x `elem` gs) then inSet x d else True) fs
+  in all (\x -> if not (x `elem` g) then inSet x d else True) f
 
 testDifferenceSet :: Int -> IO ()
 testDifferenceSet n = testSetProp2 (\f g -> (prop_DifferenceElementsNotInOther f g) && (prop_DifferenceHasAllElements f g)) n
@@ -88,3 +91,15 @@ testDifferenceSet n = testSetProp2 (\f g -> (prop_DifferenceElementsNotInOther f
 -- Time taken 1.5h. 
 -- Tested with own generator and `testUnionSet`, `testIntersectionSet` & `testDifferenceSet`
 -- Tested with QuickCheck using properties `prop_UnionHasAllElements`, `prop_UnionHasOnlyElements`, `prop_IntersectionElementsInBoth`, `prop_IntersectionHasAllElements`, `prop_DifferenceElementsNotInOther` & `prop_DifferenceHasAllElements`
+
+-- START symmetric closure
+
+type Rel a = [(a, a)]
+
+symClos :: Ord a => Rel a -> Rel a
+symClos [] = []
+symClos ((a,b):rs) = 
+  let x = (b,a)
+  in [(a,b), x] ++ (symClos (delete x rs))
+
+-- END 
