@@ -138,8 +138,8 @@ arbForm 0 = arbProp
 arbForm n = oneof [
     arbProp, 
     liftM Neg subform, 
-    liftM Cnj (listOf (resize 5 subform)),
-    liftM Dsj (listOf (resize 5 subform)),
+    liftM Cnj (resize 5 (listOf subform)),
+    liftM Dsj (resize 5 (listOf subform)),
     liftM2 Impl subform subform,
     liftM2 Equiv subform subform
   ] where 
