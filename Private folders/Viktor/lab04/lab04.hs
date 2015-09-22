@@ -4,12 +4,20 @@ where
 
 import SetOrd
 import Data.List
+import Data.Map
 import System.Random
 import Test.QuickCheck 
+import Control.Monad
+
+instance (Ord a, Arbitrary a) => Arbitrary (Set a) where 
+  arbitrary = do
+  	a <-arbitrary
+  	return $ list2set a 
+
+--instance Foldable (Set a) where
+ -- foldr f s (Set l) = foldr f s l
 
 -- ex 02
-
-
 -- random number generator
 {--
 genSet :: Int -> IO (Set Int)
@@ -55,31 +63,23 @@ genInt n = do
     rs <- randomRIO (0, n)
     return rs
 
+-- QuickCheck
 genSetQC :: Gen (Set Int)
 genSetQC = do
  	val <- arbitrary
  	return val 	
 
--- QuickCheck
- --instance Arbitrary Set Int where
- --   arbitrary = oneof [powerSet [0..5]]
-
+-- Ex 03
 {--
+Union is already defined in SetOrd.hs
+
 unionSet :: (Ord a) => Set a -> Set a -> Set a 
 unionSet (Set [])     set2  =  set2
 unionSet (Set (x:xs)) set2  = 
    insertSet x (unionSet (Set xs) set2)
 --}
 
-instance (Ord a, Arbitrary a) => Arbitrary (Set a) where 
-  arbitrary = do
-  	a <-arbitrary
-  	return $ list2set a 
- 
 
-{-- --}
--- Ex 03
---Union is already defined in SetOrd.hs
 
 -- Intersection
 interSet :: (Ord a) => (Set a) -> (Set a) -> (Set a)
@@ -91,22 +91,86 @@ diffSet :: (Ord a) => (Set a) -> (Set a) -> (Set a)
 diffSet (Set []) _ = (Set [])
 diffSet (Set (x:xs)) set2 | inSet x set2 = diffSet (Set xs) set2 
 						   | otherwise = (insertSet x (diffSet (Set xs) set2))
+-- TESTING	
+prop_unionSet :: Set Int -> Set Int -> Bool
+prop_unionSet s1 s2 = all (\x -> inSet x s1 || inSet x s2) (extractList (unionSet s1 s2))
+
+prop_intersectSet :: Set Int -> Set Int -> Bool
+prop_intersectSet s1 s2 = all (\x -> inSet x s1 && inSet x s2) (extractList (interSet s1 s2))
+
+prop_diffSet :: Set Int -> Set Int -> Bool
+prop_diffSet s1 s2 = all (\x -> inSet x s1 && not (inSet x s2)) (extractList (diffSet s1 s2))
 
 
+--MY TESTS
+{-- 
+testInter :: IO String
+testInter = do
+	let result = ""
 
-prop_UnionContainsAllElements :: Set Int -> Set Int -> Bool
-prop_UnionContainsAllElements f@(Set fs) g@(Set gs) = 
-  let u = unionSet f g
-  in (all (\x -> inSet x u) fs) || (all (\x -> inSet x u) gs)
+	return result
+
+testInter' :: Int -> [String] -> IO [String]
+testInter' 0 acc = acc
+testInter' n acc = testInter' (n-1) ((failure):acc)
+				where
+					failure = if (prop)
+
+
+testInter :: IO (
+testInter =  do 
+	let n = 100
+	loop $ do 
+           s <- genSet
+           while (n > 0)
+--}
+
+testSets :: IO [String]
+testSets = do
+	u <- testUnion
+	i <- testInter
+	d <- testDiff
+	let result = u++i++d 
+	return result
+
+testInter :: IO [String]
+testInter = do
+	result <- testN prop_intersectSet 100
+	print ("Intersection: "++show (100 - (length result))++" out of 100 tests passed.")
+	return result
+
+testUnion :: IO [String]
+testUnion = do
+	result <- testN prop_unionSet 100
+	print ("Union: "++show (100 - (length result))++" out of 100 tests passed.")
+	return result
+
+testDiff :: IO [String]
+testDiff = do
+	result <- testN prop_diffSet 100
+	print ("Difference: "++show (100 - (length result))++" out of 100 tests passed.")
+	return result
 	
--- for all x in Set1 and all x Set2 -> x in Set1 intersection Set2	
-prop_Intersection :: Set Int -> Set Int -> Bool
-prop_Intersection f@(Set fs) g@(Set gs) = 
-  let u = interSet f g
-  in (all (\x -> inSet x u) fs) && (all (\x -> inSet x u) gs)
+testN :: (Set Int -> Set Int -> Bool) -> Int -> IO [String]
+testN _ 0 = return []
+testN prop n = do
+	x <- testSingle prop []
+	xs <- testN prop (n-1)
+	let result = x++xs
+	return result 
+
+testSingle :: (Set Int -> Set Int -> Bool) -> [String] -> IO [String]
+testSingle prop acc = do
+	s1 <- genSet
+	s2 <- genSet
+	let result = if (prop s1 s2) then [] else [show (s1) ++ " and "++(show s2)]
+	return result
 
 
---ex04
+-- REPORT
+-- 40 min
+
+--ex05
 type Rel a = [(a,a)] 
 
 extractList :: Set a -> [a]
@@ -122,7 +186,7 @@ insertList x ys@(y:ys') = case compare x y of
 
 -- not very efficient version, sometimes might have do redundand computations
 symClos :: Ord a => Rel a -> Rel a
-symClos r = extractList $ list2set $ symClos' r
+symClos r = nub $ symClos' r
 
 
 symClos' :: Ord a => Rel a -> Rel a
@@ -131,6 +195,11 @@ symClos' (x:xs) = y:(x:(symClos' xs))
 					where
 						(a,b) = x
 						y = (b,a)
+
+prop_symetric :: (Ord a) => Rel a -> Bool
+prop_symetric r = and [ (y,x) `elem` r | (x, y) <- r]
+
+
 
 -- 5 min
 
@@ -160,6 +229,17 @@ trClos' (x:xs) = [x]++([x] @@ xs)++(trClos' xs)
 fp :: Eq a => (Rel a -> Rel a) -> Rel a -> Rel a 
 fp f = until (\ x -> x == f x) f
 
+prop_transitive :: (Ord a) => Rel a -> Bool
+prop_transitive r = and [not ((y == y2) && (not ((x,z) `elem` r))) | (x,y) <- r, (y2,z) <- r]
+
+{-- isReversed :: Ord a => (a,a) -> (a,a) -> Bool
+isReversed (x1,y1) (y2, x2) | x1 == x2 || y1 == y2 = True
+							| otherwise = False 
+--}
+
+
+-- REPORT
+-- 50min
 
 -- ex07
 {-- 
@@ -196,6 +276,11 @@ test07 = do
 -- Examples when it is not the same
 --trClos $ symClos [(1,-1)]
 --symClos $ trClos [(1,-1)]
+{--
+symetric as the first applied function makes pairs (a,b) and (b,a). Therefore result ater applying trClos must contains reflexive tuples. 
+The other way around doesnt imply that there must be reflexive tuples. So they are not equal and it depends on the order of functions
+--}
+
 
 {-- 
 generate :: Gen Int -> IO Int
@@ -208,4 +293,6 @@ generate g =
 --quickCheck
 --trClos [(1,2),(2,3),(3,4)] should give [(1,2),(1,3),(1,4),(2,3),(2,4),(3,4)].
 -- (1,3)
+
+
 
