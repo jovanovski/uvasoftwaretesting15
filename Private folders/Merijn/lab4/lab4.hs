@@ -6,6 +6,7 @@ import System.Random
 import Test.QuickCheck
 import Control.Monad
 import Data.List
+import Data.Char
 -- import Data.Function -- using fix function definition from lecture
 import Lecture4
 
@@ -263,16 +264,33 @@ arbStatement n = case n of
 instance Arbitrary Statement where 
   arbitrary = sized arbStatement
 
---instance Read Expr where 
---  readsPrec d r = case r of 
---    ('(':r1) -> 
---      let (e1,r2):[] = readsPrec d r1
---      in case r2 of 
---        ('+':r3) -> let ((e2,r4):[]) = readsPrec d r3 in [(Add e1 e2, r4)]
---        ('-':r3) -> let ((e2,r4):[]) = readsPrec d r3 in [(Subtr e1 e2, r4)]
---        ('*':r3) -> let ((e2,r4):[]) = readsPrec d r3 in [(Mult e1 e2, r4)]
---        otherwise -> [(e1,r2)]
---    ('"':r1) -> [(V (takeWhile (\x -> x /= '"') r1),"")]
---    otherwise -> let ((i,r4):[]) = readsPrec d r in [(I i,"")]
+instance Read Expr where 
+  readsPrec d r = 
+    let rs = filter (\x -> not $ isSpace x) r
+    in case rs of 
+      ('(':rs1) -> 
+        let (e1,rs2):[] = readsPrec d rs1
+        in case rs2 of
+          (')':'+':'(':rs3) -> 
+            let ((e2,rs4):[]) = readsPrec d rs3 
+            in case rs4 of 
+              ')':rs5 -> [(Add e1 e2, rs5)]
+          (')':'-':'(':rs3) -> 
+            let ((e2,rs4):[]) = readsPrec d rs3 
+            in case rs4 of 
+              ')':rs5 -> [(Subtr e1 e2, rs5)]
+          (')':'*':'(':rs3) -> 
+            let ((e2,rs4):[]) = readsPrec d rs3 
+            in case rs4 of 
+              ')':rs5 -> [(Mult e1 e2, rs5)]
+          (')':rs3) -> [(e1,rs3)] 
+      (x:_) -> 
+        if isAlpha x then
+          [(V (takeWhile isAlpha rs), dropWhile (isAlpha) rs)]
+        else
+          let ((i,rs4):[]) = readsPrec d rs in [(I i, rs4)]
+
+prop_ExprReadShowIsEqual :: Expr -> Bool
+prop_ExprReadShowIsEqual e = e == (read $ show e)
 
 -- END Bonus - show function
