@@ -178,12 +178,19 @@ instance Show Condition where
     (Cj cs) -> "(" ++ intercalate ") && (" (map show cs) ++ ")"
     (Dj cs) -> "(" ++ intercalate ") || (" (map show cs) ++ ")"
 
+showIndent :: Int -> Statement -> String
+showIndent i s =
+  let p = replicate i ' '
+  in case s of 
+  (Ass v e) ->  p ++ v ++ " = " ++ (show e) ++ "\n"
+  (Cond c t f) -> p ++ "if (" ++ (show c) ++ ") {\n" ++ (subShowIndent t) ++ p ++ "} else {\n" ++ (subShowIndent f) ++ p ++ "}\n"
+  (Seq sts) -> foldr (++) "" (map (showIndent i) sts)
+  (While c b) -> p ++ "while (" ++ (show c) ++ ") {\n" ++ (subShowIndent b) ++ p ++ "}\n"
+  where 
+    subShowIndent s = showIndent (i+4) s
+
 instance Show Statement where 
-  show s = case s of 
-    (Ass v e) -> v ++ " = " ++ (show e)
-    (Cond c t f) -> "if (" ++ (show c) ++ ") {\n" ++ (show t) ++ "\n} else {\n" ++ (show f) ++ "\n}\n"
-    (Seq sts) -> intercalate ";\n" (map show sts)
-    (While c b) -> "while (" ++ (show c) ++ ") {\n" ++ (show b) ++ "\n}\n"
+  show s = showIndent 0 s
 
 arbI :: Gen Expr
 arbI = liftM I (resize 5 arbitrary)
@@ -236,8 +243,8 @@ arbCondition n vs = case n of
         liftM2 Lt subExpr subExpr,
         liftM2 Gt subExpr subExpr,
         liftM Ng subCondition,
-        liftM Cj (listOf subCondition),
-        liftM Dj (listOf subCondition)
+        liftM Cj subConditionList,
+        liftM Dj subConditionList
       ]
     vs -> oneof [
         liftM Prp (elements vs),
@@ -245,12 +252,13 @@ arbCondition n vs = case n of
         liftM2 Lt subExpr subExpr,
         liftM2 Gt subExpr subExpr,
         liftM Ng subCondition,
-        liftM Cj (listOf subCondition),
-        liftM Dj (listOf subCondition)
+        liftM Cj subConditionList,
+        liftM Dj subConditionList
       ] 
   where 
     subExpr = arbExpr (n `div` 2) vs
     subCondition = arbCondition (n `div` 2) vs
+    subConditionList = (resize 5 (listOf subCondition))
 
 arbVar :: Gen String  
 arbVar = elements ["a", "b", "c", "d"]
@@ -318,6 +326,6 @@ instance Arbitrary Statement where
   arbitrary = sized arbStatement
 
 --prop_StatementEvaluates :: Statement -> Bool
---prop_StatementEvaluates s = (exec initEnv s) == 0 || True
+--prop_StatementEvaluates s = (exec initEnv s) == "" || True
 
 -- END Bonus - show function
