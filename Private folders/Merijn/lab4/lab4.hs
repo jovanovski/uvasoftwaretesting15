@@ -182,7 +182,7 @@ showIndent :: Int -> Statement -> String
 showIndent i s =
   let p = replicate i ' '
   in case s of 
-  (Ass v e) ->  p ++ v ++ " = " ++ (show e) ++ "\n"
+  (Ass v e) ->  p ++ v ++ " = " ++ (show e) ++ ";\n"
   (Cond c t f) -> p ++ "if (" ++ (show c) ++ ") {\n" ++ (subShowIndent t) ++ p ++ "} else {\n" ++ (subShowIndent f) ++ p ++ "}\n"
   (Seq sts) -> foldr (++) "" (map (showIndent i) sts)
   (While c b) -> p ++ "while (" ++ (show c) ++ ") {\n" ++ (subShowIndent b) ++ p ++ "}\n"
@@ -273,21 +273,9 @@ arbStatementListS n vs l = case n of
         se <- subExpr
         sl <- (arbStatementListS (n `div` 2) (v:vs) (l-1))
         return $ (Ass v se):sl,
-      do 
-        c <- subCondition
-        t <- subStatementV
-        f <- subStatementV
-        sl <- subStatementListS
-        return $ (Cond c t f):sl,
-      do
-        sl1 <- subStatementListS
-        sl2 <- subStatementListS
-        return $ (Seq sl1):sl2,
-      do 
-        c <- subCondition
-        s <- subStatementV
-        sl <- subStatementListS
-        return $ (While c s):sl
+      liftM4 (\c t f sl -> (Cond c t f):sl) subCondition subStatementV subStatementV subStatementListS,
+      liftM2 (\sl1 sl2 -> (Seq sl1):sl2) subStatementListS subStatementListS,
+      liftM3 (\c s sl -> (While c s):sl) subCondition subStatementV subStatementListS
     ]
   where 
     subExpr = arbExpr (n `div` 2) vs
@@ -325,7 +313,6 @@ arbStatement n = arbStatementV n []
 instance Arbitrary Statement where 
   arbitrary = sized arbStatement
 
---prop_StatementEvaluates :: Statement -> Bool
---prop_StatementEvaluates s = (exec initEnv s) == "" || True
+
 
 -- END Bonus - show function
