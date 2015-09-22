@@ -192,127 +192,87 @@ showIndent i s =
 instance Show Statement where 
   show s = showIndent 0 s
 
+arbVarname :: Gen String
+arbVarname = elements ["a", "b", "c", "d"]
+
 arbI :: Gen Expr
 arbI = liftM I (resize 5 arbitrary)
 
-arbV :: [String] -> Gen Expr
-arbV vs = liftM V (elements vs)
+arbV :: Gen Expr
+arbV = liftM V arbVarname
 
-arbExpr :: Int -> [String] -> Gen Expr
-arbExpr 0 [] = arbI
-arbExpr 0 vs = oneof [arbI, arbV vs]
-arbExpr n vs = 
+arbExpr :: Int -> Gen Expr
+arbExpr n = 
   case n of 
-    0 -> case vs of 
-      [] -> arbI
-      vs -> oneof [arbI, arbV vs]
-    n -> case vs of 
-      [] -> oneof [
-          arbI,
-          liftM2 Add subExpr subExpr,
-          liftM2 Subtr subExpr subExpr,
-          liftM2 Mult subExpr subExpr
-        ]
-      vs ->  oneof [
-          arbI,
-          arbV vs,
-          liftM2 Add subExpr subExpr,
-          liftM2 Subtr subExpr subExpr,
-          liftM2 Mult subExpr subExpr
-        ]
+    0 -> oneof [arbI, arbV]
+    n -> oneof [
+        arbI,
+        arbV,
+        liftM2 Add subExpr subExpr,
+        liftM2 Subtr subExpr subExpr,
+        liftM2 Mult subExpr subExpr
+      ]
   where 
-    subExpr = arbExpr (n `div` 2) vs
+    subExpr = arbExpr (n `div` 2)
 
-arbCondition :: Int -> [String] -> Gen Condition
-arbCondition n vs = case n of 
-  0 -> case vs of 
-    [] -> oneof [
-        liftM2 Eq subExpr subExpr,
-        liftM2 Lt subExpr subExpr,
-        liftM2 Gt subExpr subExpr
-      ]
-    vs -> oneof [
-        liftM Prp (elements vs),
-        liftM2 Eq subExpr subExpr,
-        liftM2 Lt subExpr subExpr,
-        liftM2 Gt subExpr subExpr
-      ]
-  n -> case vs of
-    [] -> oneof [
-        liftM2 Eq subExpr subExpr,
-        liftM2 Lt subExpr subExpr,
-        liftM2 Gt subExpr subExpr,
-        liftM Ng subCondition,
-        liftM Cj subConditionList,
-        liftM Dj subConditionList
-      ]
-    vs -> oneof [
-        liftM Prp (elements vs),
-        liftM2 Eq subExpr subExpr,
-        liftM2 Lt subExpr subExpr,
-        liftM2 Gt subExpr subExpr,
-        liftM Ng subCondition,
-        liftM Cj subConditionList,
-        liftM Dj subConditionList
-      ] 
-  where 
-    subExpr = arbExpr (n `div` 2) vs
-    subCondition = arbCondition (n `div` 2) vs
-    subConditionList = (resize 5 (listOf subCondition))
+instance Arbitrary Expr where 
+  arbitrary = sized arbExpr
 
-arbVar :: Gen String  
-arbVar = elements ["a", "b", "c", "d"]
-
-arbStatementListS :: Int -> [String] -> Int -> Gen [Statement]
-arbStatementListS n vs 0 = return []
-arbStatementListS n vs l = case n of 
-  0 -> return []
+arbCondition :: Int -> Gen Condition
+arbCondition n = case n of 
+  0 -> oneof [
+      liftM Prp arbVarname,
+      liftM2 Eq subExpr subExpr,
+      liftM2 Lt subExpr subExpr,
+      liftM2 Gt subExpr subExpr
+    ]
   n -> oneof [
-      do 
-        v <- arbVar
-        se <- subExpr
-        sl <- (arbStatementListS (n `div` 2) (v:vs) (l-1))
-        return $ (Ass v se):sl,
-      liftM4 (\c t f sl -> (Cond c t f):sl) subCondition subStatementV subStatementV subStatementListS,
-      liftM2 (\sl1 sl2 -> (Seq sl1):sl2) subStatementListS subStatementListS,
-      liftM3 (\c s sl -> (While c s):sl) subCondition subStatementV subStatementListS
+      liftM Prp arbVarname,
+      liftM2 Eq subExpr subExpr,
+      liftM2 Lt subExpr subExpr,
+      liftM2 Gt subExpr subExpr,
+      liftM Ng subCondition,
+      liftM Cj subConditionList,
+      liftM Dj subConditionList
     ]
   where 
-    subExpr = arbExpr (n `div` 2) vs
-    subStatementV = arbStatementV (n `div` 2) vs
-    subStatementListS = arbStatementListS (n `div` 2) vs (l-1)
-    subCondition = arbCondition (n `div` 2) vs
+    subExpr = arbExpr (n `div` 2)
+    subCondition = arbCondition (n `div` 2)
+    subConditionList = (resize 5 (listOf subCondition))
 
-arbStatementList :: Int -> [String] -> Gen [Statement]
-arbStatementList n vs = do
-  s <- resize 4 arbitrary
-  l <- arbStatementListS n vs (abs s)
-  return l 
+instance Arbitrary Condition where 
+  arbitrary = sized arbCondition
 
-arbAss :: Int -> [String] -> Gen Statement
-arbAss n vs = liftM2 Ass arbVar (arbExpr n vs)
+arbAss :: Int -> Gen Statement
+arbAss n = liftM2 Ass arbVarname (arbExpr n)
 
-arbStatementV :: Int -> [String] -> Gen Statement
-arbStatementV n vs = case n of 
+arbStatement :: Int -> Gen Statement
+arbStatement n = case n of 
   0 -> subAss
   n -> oneof [
       subAss,
-      liftM3 Cond subCondition subStatementV subStatementV,
-      liftM Seq subStatementList,
-      liftM2 While subCondition subStatementV
+      liftM3 Cond subCondition subStatement subStatement,
+      liftM Seq (resize 5 (listOf subStatement)),
+      liftM2 While subCondition subStatement
     ]
   where
-    subAss = (arbAss (n `div` 2) vs)
-    subStatementV = arbStatementV (n `div` 2) vs
-    subStatementList = arbStatementList (n `div` 2) vs
-    subCondition = arbCondition (n `div` 2) vs
-
-arbStatement :: Int -> Gen Statement
-arbStatement n = arbStatementV n []
+    subAss = (arbAss (n `div` 2))
+    subStatement = arbStatement (n `div` 2)
+    subCondition = arbCondition (n `div` 2)
 
 instance Arbitrary Statement where 
   arbitrary = sized arbStatement
 
-
+--instance Read Expr where 
+--  readsPrec d r = case r of 
+--    ('(':r1) -> 
+--      let (e1,r2):[] = readsPrec d r1
+--      in case r2 of 
+--        ('+':r3) -> let ((e2,r4):[]) = readsPrec d r3 in [(Add e1 e2, r4)]
+--        ('-':r3) -> let ((e2,r4):[]) = readsPrec d r3 in [(Subtr e1 e2, r4)]
+--        ('*':r3) -> let ((e2,r4):[]) = readsPrec d r3 in [(Mult e1 e2, r4)]
+--        otherwise -> [(e1,r2)]
+--    ('"':r1) -> [(V (takeWhile (\x -> x /= '"') r1),"")]
+--    otherwise -> let ((i,r4):[]) = readsPrec d r in [(I i,"")]
 
 -- END Bonus - show function
