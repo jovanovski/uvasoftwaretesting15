@@ -350,3 +350,5 @@ prop_StatementReadShowIsEqual :: Statement -> Bool
 prop_StatementReadShowIsEqual s = s == (read $ show s)
 
 -- END Bonus - show function
+-- Time taken 6h - this was too much time for a bonus exercise to be fun...
+-- Tested using quickcheck and prop_*ReadShowIsEqual
