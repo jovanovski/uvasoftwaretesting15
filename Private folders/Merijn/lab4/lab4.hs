@@ -165,33 +165,26 @@ instance Show Expr where
   show e = case e of 
     (I i) -> show i
     (V v) -> v
-    (Add a b) -> "(" ++ (show a) ++ ") + (" ++ (show b) ++ ")"
-    (Subtr a b) -> "(" ++ (show a) ++ ") - (" ++ (show b) ++ ")"
-    (Mult a b) -> "(" ++ (show a) ++ ") * (" ++ (show b) ++ ")"
+    (Add a b) -> "+(" ++ (show a) ++ " " ++ (show b) ++ ")"
+    (Subtr a b) -> "-(" ++ (show a) ++ " " ++ (show b) ++ ")"
+    (Mult a b) -> "*(" ++ (show a) ++ " " ++ (show b) ++ ")"
 
 instance Show Condition where 
   show c = case c of 
-    (Prp v) -> show v
-    (Eq a b) -> "(" ++ show a ++ ") == (" ++ show b ++ ")"
-    (Lt a b) -> "(" ++ show a ++ ") < (" ++ show b ++ ")"
-    (Gt a b) -> "(" ++ show a ++ ") > (" ++ show b ++ ")"
+    (Prp v) -> v
+    (Eq a b) -> "==(" ++ show a ++ " " ++ show b ++ ")"
+    (Lt a b) -> "<(" ++ show a ++ " " ++ show b ++ ")"
+    (Gt a b) -> ">(" ++ show a ++ " " ++ show b ++ ")"
     (Ng a) -> "!(" ++ show a ++ ")"
-    (Cj cs) -> "(" ++ intercalate ") && (" (map show cs) ++ ")"
-    (Dj cs) -> "(" ++ intercalate ") || (" (map show cs) ++ ")"
-
-showIndent :: Int -> Statement -> String
-showIndent i s =
-  let p = replicate i ' '
-  in case s of 
-  (Ass v e) ->  p ++ v ++ " = " ++ (show e) ++ ";\n"
-  (Cond c t f) -> p ++ "if (" ++ (show c) ++ ") {\n" ++ (subShowIndent t) ++ p ++ "} else {\n" ++ (subShowIndent f) ++ p ++ "}\n"
-  (Seq sts) -> foldr (++) "" (map (showIndent i) sts)
-  (While c b) -> p ++ "while (" ++ (show c) ++ ") {\n" ++ (subShowIndent b) ++ p ++ "}\n"
-  where 
-    subShowIndent s = showIndent (i+4) s
+    (Cj cs) -> "&&(" ++ unwords (map show cs) ++ ")"
+    (Dj cs) -> "||(" ++ unwords (map show cs) ++ ")"
 
 instance Show Statement where 
-  show s = showIndent 0 s
+  show s = case s of 
+    (Ass v e) ->  "=(" ++ v ++ " " ++ (show e) ++ ")"
+    (Cond c t f) -> "if(" ++ (show c) ++ " " ++ (show t) ++ " " ++ (show f) ++ ")"
+    (Seq sts) -> "{" ++ unwords (map show sts) ++ "}"
+    (While c b) -> "while(" ++ (show c) ++ " " ++ (show b) ++ ")"
 
 arbVarname :: Gen String
 arbVarname = elements ["a", "b", "c", "d"]
@@ -264,33 +257,96 @@ arbStatement n = case n of
 instance Arbitrary Statement where 
   arbitrary = sized arbStatement
 
+filterWhitespace :: String -> String
+filterWhitespace s = filter (\c -> not $ isSpace c) s
+
+readVar :: String -> (String,String)
+readVar s = (takeWhile isAlpha s, dropWhile isAlpha s)
+
+read2Close :: Read a => Read b => (a -> b -> String -> [(c, String)]) -> Int -> String -> [(c, String)]
+read2Close f d r = case readsPrec d r of
+  (a,r1):[] -> case r1 of
+    ' ':r2 -> case readsPrec d r2 of 
+      (b,r3):[] -> case r3 of 
+        ')':r4 -> f a b r4
+
 instance Read Expr where 
-  readsPrec d r = 
-    let rs = filter (\x -> not $ isSpace x) r
-    in case rs of 
-      ('(':rs1) -> 
-        let (e1,rs2):[] = readsPrec d rs1
-        in case rs2 of
-          (')':'+':'(':rs3) -> 
-            let ((e2,rs4):[]) = readsPrec d rs3 
-            in case rs4 of 
-              ')':rs5 -> [(Add e1 e2, rs5)]
-          (')':'-':'(':rs3) -> 
-            let ((e2,rs4):[]) = readsPrec d rs3 
-            in case rs4 of 
-              ')':rs5 -> [(Subtr e1 e2, rs5)]
-          (')':'*':'(':rs3) -> 
-            let ((e2,rs4):[]) = readsPrec d rs3 
-            in case rs4 of 
-              ')':rs5 -> [(Mult e1 e2, rs5)]
-          (')':rs3) -> [(e1,rs3)] 
-      (x:_) -> 
-        if isAlpha x then
-          [(V (takeWhile isAlpha rs), dropWhile (isAlpha) rs)]
-        else
-          let ((i,rs4):[]) = readsPrec d rs in [(I i, rs4)]
+  readsPrec d r = case r of 
+    '+':'(':r1 -> read2Close (\e1 e2 r -> [(Add e1 e2, r)]) d r1
+    '-':'(':r1 -> read2Close (\e1 e2 r -> [(Subtr e1 e2, r)]) d r1
+    '*':'(':r1 -> read2Close (\e1 e2 r -> [(Mult e1 e2, r)]) d r1
+    (x:_) -> 
+      if isAlpha x then 
+        let (v,r1) = readVar r in [(V v, r1)]
+      else 
+        let (i,r1):[] = readsPrec d r in [(I i, r1)]
 
 prop_ExprReadShowIsEqual :: Expr -> Bool
 prop_ExprReadShowIsEqual e = e == (read $ show e)
+
+instance Read Condition where 
+  readsPrec d r =  case r of 
+    '=':'=':'(':r1 -> read2Close (\e1 e2 r -> [(Eq e1 e2, r)]) d r1
+    '<':'(':r1 -> read2Close (\e1 e2 r -> [(Lt e1 e2, r)]) d r1
+    '>':'(':r1 -> read2Close (\e1 e2 r -> [(Gt e1 e2, r)]) d r1
+    '!':'(':r1 -> case readsPrec d r1 of 
+      (c,r2):[] -> case r2 of 
+        ')':r3 -> [(Ng c, r3)] 
+    '&':'&':'(':r1 -> 
+      case readConditions r1 [] of 
+        [] -> case r1 of 
+          ')':r2 -> [(Cj [], r2)]
+        (cs,r2):[] -> case r2 of 
+          ')':r3 -> [(Cj cs, r3)]
+    '|':'|':'(':r1 -> 
+      case readConditions r1 [] of 
+        [] -> case r1 of 
+          ')':r2 -> [(Dj [], r2)]
+        (cs,r2):[] -> case r2 of 
+          ')':r3 -> [(Dj cs, r3)]
+    x:_ -> 
+      if isAlpha x then 
+        let (v,r1) = readVar r in [(Prp v, r1)]
+      else []
+    where
+      readConditions r cs = case readsPrec d r of 
+        [] -> []
+        (c,r1):[] -> 
+          let cs2 = cs ++ [c]
+          in case r1 of 
+            ' ':r2 -> readConditions r2 cs2
+            otherwise -> [(cs2, r1)]
+
+prop_ConditionReadShowIsEqual :: Condition -> Bool
+prop_ConditionReadShowIsEqual e = e == (read $ show e)
+
+instance Read Statement where 
+  readsPrec d r = case r of 
+    '=':'(':r1 -> let (v,r2) = readVar r1 in case r2 of 
+      ' ':r3 -> case readsPrec d r3 of 
+        (e,r4):[] -> case r4 of
+          ')':r5 -> [(Ass v e, r5)]
+    'i':'f':'(':r1 -> case readsPrec d r1 of 
+      (c,r2):[] -> case r2 of 
+        ' ':r3 -> case readsPrec d r3 of 
+          (s1,r4):[] -> case r4 of 
+            ' ':r5 -> case readsPrec d r5 of 
+              (s2,r6):[] -> case r6 of 
+                ')':r7 -> [(Cond c s1 s2, r7)]
+    '{':r1 -> case r1 of 
+        '}':r2 -> [(Seq [], r2)] 
+        otherwise -> let (ss, r2):[] = readStatements r1 [] in case r2 of 
+          '}':r3 -> [(Seq ss, r3)]
+    'w':'h':'i':'l':'e':'(':r1 -> read2Close (\c s r -> [(While c s,r)]) d r1
+    where 
+      readStatements r ss = case readsPrec d r of 
+        (s,r1):[] -> 
+          let ss2 = ss ++ [s]
+          in case r1 of 
+            ' ':r2 -> readStatements r2 ss2
+            otherwise -> [(ss2, r1)]
+
+prop_StatementReadShowIsEqual :: Statement -> Bool
+prop_StatementReadShowIsEqual s = s == (read $ show s)
 
 -- END Bonus - show function
