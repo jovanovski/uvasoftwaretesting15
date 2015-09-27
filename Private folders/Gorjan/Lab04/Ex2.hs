@@ -30,9 +30,8 @@ instance (Ord a, Arbitrary a) => Arbitrary (Set a) where
 --Checks order and no duplicates in Set
 prop_checkOrder :: Set Integer -> Bool
 prop_checkOrder (Set []) = True
+prop_checkOrder (Set (x:y:xs)) = if x<y then prop_checkOrder (Set (y:xs)) else False
 prop_checkOrder (Set x) = True
-prop_checkOrder (Set (x:y:xs)) = if x<y then prop_checkOrder (Set xs) else False
-
 generateSet :: Gen (Set Integer)
 generateSet = do
 	a <- arbitrary
