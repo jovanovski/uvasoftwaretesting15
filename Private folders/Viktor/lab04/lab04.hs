@@ -4,30 +4,18 @@ where
 
 import SetOrd
 import Data.List
-import Data.Map
 import System.Random
 import Test.QuickCheck 
 import Control.Monad
+import Lecture4
+import Testing
 
 instance (Ord a, Arbitrary a) => Arbitrary (Set a) where 
   arbitrary = do
   	a <-arbitrary
   	return $ list2set a 
 
---instance Foldable (Set a) where
- -- foldr f s (Set l) = foldr f s l
-
 -- ex 02
--- random number generator
-{--
-genSet :: Int -> IO (Set Int)
-genSet 0 = return (Set [])
-genSet n = do
-    x <- genInt 100
-    let xs  = genSet (n-1)
-    set <- insertSetIO x xs
-    return set
---}
 randomFlip :: Int -> IO Int
 randomFlip x = do 
    b <- genInt 1
@@ -55,7 +43,7 @@ insertAllSet (x:xs) = insertSet x (insertAllSet xs)
 genSet :: IO (Set Int)
 genSet = do
 	list <- genIntList
-	let set = insertAllSet list
+	let set = insertAllSet $ sort list
 	return set
 
 genInt :: Int -> IO Int
@@ -79,8 +67,6 @@ unionSet (Set (x:xs)) set2  =
    insertSet x (unionSet (Set xs) set2)
 --}
 
-
-
 -- Intersection
 interSet :: (Ord a) => (Set a) -> (Set a) -> (Set a)
 interSet (Set []) _ = (Set [])
@@ -103,28 +89,6 @@ prop_diffSet s1 s2 = all (\x -> inSet x s1 && not (inSet x s2)) (extractList (di
 
 
 --MY TESTS
-{-- 
-testInter :: IO String
-testInter = do
-	let result = ""
-
-	return result
-
-testInter' :: Int -> [String] -> IO [String]
-testInter' 0 acc = acc
-testInter' n acc = testInter' (n-1) ((failure):acc)
-				where
-					failure = if (prop)
-
-
-testInter :: IO (
-testInter =  do 
-	let n = 100
-	loop $ do 
-           s <- genSet
-           while (n > 0)
---}
-
 testSets :: IO [String]
 testSets = do
 	u <- testUnion
@@ -200,7 +164,6 @@ prop_symetric :: (Ord a) => Rel a -> Bool
 prop_symetric r = and [ (y,x) `elem` r | (x, y) <- r]
 
 
-
 -- 5 min
 
 -- EX06
@@ -210,10 +173,6 @@ infixr 5 @@
 r @@ s = 
   nub [ (x,z) | (x,y) <- r, (w,z) <- s, y == w ]
 
-infixl 1 $$
- 
-($$) :: a -> (a -> b) -> b
-($$) = flip ($)
 
 trClos :: Ord a => Rel a -> Rel a 
 trClos r = (r) $$ fp (\r -> tr r)
@@ -226,30 +185,12 @@ trClos' [] = []
 --trClos [r] = [r]
 trClos' (x:xs) = [x]++([x] @@ xs)++(trClos' xs)
 
-fp :: Eq a => (Rel a -> Rel a) -> Rel a -> Rel a 
-fp f = until (\ x -> x == f x) f
-
 prop_transitive :: (Ord a) => Rel a -> Bool
 prop_transitive r = and [not ((y == y2) && (not ((x,z) `elem` r))) | (x,y) <- r, (y2,z) <- r]
-
-{-- isReversed :: Ord a => (a,a) -> (a,a) -> Bool
-isReversed (x1,y1) (y2, x2) | x1 == x2 || y1 == y2 = True
-							| otherwise = False 
---}
-
-
 -- REPORT
 -- 50min
 
 -- ex07
-{-- 
-seeDiff :: IO Bool
-seeDiff = do
-	let r = genSet
-	result <- compareEx07 r
-	return result
---}
-
 compareEx07 :: Rel Int -> Bool
 compareEx07 r = a == b where
 	a = trClos $ symClos r
@@ -269,7 +210,6 @@ genRel = do
 test07 :: Gen (Bool, Rel Int)
 test07 = do
  	val <- arbitrary 
--- 	v <- generate val
  	let result = compareEx07 val
  	return (result, val)
 
@@ -280,19 +220,3 @@ test07 = do
 symetric as the first applied function makes pairs (a,b) and (b,a). Therefore result ater applying trClos must contains reflexive tuples. 
 The other way around doesnt imply that there must be reflexive tuples. So they are not equal and it depends on the order of functions
 --}
-
-
-{-- 
-generate :: Gen Int -> IO Int
-generate g =
-  do r <- g
-     return r
---}
-{----}
---verboteCheck
---quickCheck
---trClos [(1,2),(2,3),(3,4)] should give [(1,2),(1,3),(1,4),(2,3),(2,4),(3,4)].
--- (1,3)
-
-
-
