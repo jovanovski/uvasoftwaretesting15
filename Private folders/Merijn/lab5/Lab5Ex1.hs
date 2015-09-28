@@ -72,3 +72,4 @@ solveAndShow2 :: Grid -> IO[()]
 solveAndShow2 gr = solveShowNs2 (initNode2 gr)
 
 -- time spent: 1h
+-- test using 'solveAndShow2 ex1sudoku'
