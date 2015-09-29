@@ -133,6 +133,7 @@
  
  sameblock :: (Row,Column) -> (Row,Column) -> Bool
  sameblock (r,c) (x,y) = (bl r == bl x && bl c == bl y) || (bl2 r == bl2 x && bl2 c == bl2 y) 
+ 
  initNode :: Grid -> [Node]
  initNode gr = let s = grid2sud gr in 
                if (not . consistent) s then [] 
@@ -268,3 +269,4 @@
            showNode r
            s  <- genProblem r
            showNode s
+           print (show (length (filledPositions (fst s))))

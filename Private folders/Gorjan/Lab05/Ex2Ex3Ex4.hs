@@ -368,6 +368,7 @@
             showNode r
             s  <- genProblem r
             showNode s
+            print (show (length (filledPositions (fst s))))
 -- Ex3
 
   testUnique :: IO ()
@@ -399,14 +400,96 @@
   getSolvable n [] = n
   getSolvable n (x:xs) = if uniqueSol (deleteBlocks n x) then (deleteBlocks n x) else getSolvable n xs
 
-  test3blocks :: Int -> IO ()
-  test3blocks x = do
+
+  -- testblocks
+  -- args:
+  -- - number of blocks to remove
+  -- - number of tries to do
+  -- - counter from 0 to count the tries
+  testblocks :: Int -> Int -> Int -> IO ()
+  testblocks x n o = do
                     [r] <- rsolveNs [emptyN]
                     let pos = [[(r,c)| r <- b1, c <- b2 ] | b1 <- blocks, b2 <- blocks ]
                     let coms = combinations x pos
                     let solvable = getSolvable r coms 
-                    if (filledPositions (fst solvable))==(filledPositions (fst r)) then print ("No can do") else do
-                      
+                    if (filledPositions (fst solvable))==(filledPositions (fst r)) then do 
+                      print ("Generated sudoku can't be solved in a unique way by removing " ++ (show x) ++ " blocks. "++(show n)++ " more tries remaining.") 
+                      if n>0 then testblocks x (n-1) (o+1) else print("No solution found, usually meaning "++(show x)++" blocks can't be removed from a Sudoku and still keep it with one unique solution.")
+                    else do
+                      print("Solved on the "++(show o)++" try:")
                       s <- genProblem solvable 
                       showSudoku (fst s)
+                      dif <- sudDifficulty s
+                      print ("Sudoku difficulty: " ++ dif)
+
+
+  callTest :: Int -> IO ()
+  callTest n = if n<=0 || n>=9 then error ("Can't delete "++(show n)++" blocks, wanna just try generating a normal Sudoku using 'main'?") else testblocks n 5 1
 -- end Ex4
+
+-- Ex6
+-- testing sudoku difficulty, no generation possible
+-- calculated using the 3 guidelines from here: http://alwayspuzzling.blogspot.nl/2012/12/how-to-judge-difficulty-of-sudoku.html
+  countHints :: Node -> Int
+  countHints n = length (filledPositions (fst n))
+
+  countingTest :: Node -> [Integer] -> [Integer]
+  countingTest n xs = if (countHints n) > 32 then [((xs!!0)+1),(xs!!1),(xs!!2)]
+                      else if (countHints n) > 28 then [(xs!!0),((xs!!1)+1),(xs!!2)]
+                      else [(xs!!0),(xs!!1),((xs!!2)+1)]
+
+  blockPos :: [Position] -> [Integer]
+  blockPos [] = []
+  blockPos (x:xs) = whatBlock x : blockPos xs
+
+  whatBlock :: Position -> Integer
+  whatBlock (x,y) = if x <= 3 && y <= 3 then 1
+                    else if x <= 3 && y >=4 && y <= 6 then 4
+                    else if x <= 3 && y >=7 then 7
+                    else if x >= 4 && x <= 6 && y <= 3 then 2
+                    else if x >= 4 && x <= 6 && y >=4 && y <= 6 then 5
+                    else if x >= 4 && x <= 6 && y >= 7 then 8
+                    else if x >= 7 && y <= 3 then 3
+                    else if x >= 7 && y >= 4 && y <= 6 then 6
+                    else 9
+
+  numEmptyBoxes :: Node -> Integer
+  numEmptyBoxes n = toInteger (9 - (length (nub (blockPos (filledPositions (fst n))))))
+
+  emptyBoxesTest :: Node -> [Integer] -> [Integer]
+  emptyBoxesTest n xs = emptyBoxesTest' n xs (numEmptyBoxes n)
+
+  emptyBoxesTest' :: Node -> [Integer] -> Integer -> [Integer]
+  emptyBoxesTest' n xs e = if e == 0 then [((xs!!0)+1),(xs!!1),(xs!!2)]
+                          else if e < 3 then [(xs!!0),((xs!!1)+1),(xs!!2)]
+                          else [(xs!!0),(xs!!1),((xs!!2)+1)]
+
+  countDigits :: Node -> [Integer]
+  countDigits n = (filter (/=0) (concat [[toInteger(((sud2grid (fst n))!!r)!!c)| c <- [0..8] ] | r <- [0..8] ]))
+
+  digitRepeat :: Integer -> [Integer] -> Integer
+  digitRepeat n [] = 0
+  digitRepeat n (x:xs) = if x==n then 1+(digitRepeat n xs) else (digitRepeat n xs)
+
+  seeDigitRepeat :: Node -> [Integer]
+  seeDigitRepeat n = [digitRepeat i (countDigits n) | i <- [1..9]]
+
+  digitRepeatTest :: Node -> [Integer] -> [Integer]
+  digitRepeatTest n xs = if all (>2) (seeDigitRepeat n) then [((xs!!0)+1),(xs!!1),(xs!!2)]
+                          else if length (filter (==2) (seeDigitRepeat n))<=4 && length (filter (==1) (seeDigitRepeat n))<=1 then [(xs!!0),((xs!!1)+1),(xs!!2)]
+                          else [(xs!!0),(xs!!1),((xs!!2)+1)]
+
+  sudDifficulty :: Node -> IO String
+  sudDifficulty n = do
+    let cTest = countingTest n [0,0,0]
+    let digTest = digitRepeatTest n cTest
+    let ebTest = emptyBoxesTest n digTest
+    if ebTest!!0 == maximum ebTest then return "Easy"
+      else if ebTest!!1 == maximum ebTest then return "Medium"
+      else return "Hard"
+
+--end Ex6
+
+--Ex7 
+-- hints range from 22 to 25 on a standard Sudoku, but take quicker to minimize
+-- hints range from 16 to 19 on a NRC Sudoku, but take a lot longer to minimize on that aspect
