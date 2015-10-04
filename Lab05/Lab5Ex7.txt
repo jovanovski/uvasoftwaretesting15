@@ -1,0 +1,3 @@
+--Ex7 
+-- hints range from 22 to 25 on a standard Sudoku, but take quicker to minimize
+-- hints range from 16 to 19 on a NRC Sudoku, but take a lot longer to minimize on that aspect
