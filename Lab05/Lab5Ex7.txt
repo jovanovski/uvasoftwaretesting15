@@ -1,0 +1,8 @@
+--Ex7 
+-- hints range from 22 to 25 on a standard Sudoku, but take quicker to minimize
+-- hints range from 16 to 19 on a NRC Sudoku, but take a lot longer to minimize on that aspect
+
+Results were optained using the function 'givenNumbers' on a generated sudoku using the NRC restrictions and the normal ones in the 2 generators provided in the submission.
+
+givenNumbers :: Sudoku -> Int
+givenNumbers s = length (filledPositions s)
