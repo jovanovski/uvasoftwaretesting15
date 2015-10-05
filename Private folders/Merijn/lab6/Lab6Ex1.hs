@@ -1,7 +1,5 @@
 module Lab6Ex1 where
 
-import Data.List
-import System.Random
 import Lecture6
 import Test.QuickCheck
 
@@ -18,5 +16,7 @@ exM2 x y m
 prop_exM2IsCorrect :: Integer -> Positive Integer -> NonZero Integer -> Bool
 prop_exM2IsCorrect x (Positive y) (NonZero m) = exM2 x y m == x^y `mod` m
 
--- Time taken: 30m
 -- tested using quickcheck property prop_exM2IsCorrect
+-- I think this result is better than the expM function as that one uses `rem` instead of `mod`?
+
+-- Time taken: 1h
