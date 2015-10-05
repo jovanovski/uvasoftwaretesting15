@@ -1,19 +1,28 @@
 module Lab6Ex4 where
 
 import Lab6Ex3
+import Lab6Ex1
 import Lecture6
-import Data.List
+import System.Random
 
-testFermat :: Int -> IO (Integer)
-testFermat k = helper composites where
-  helper (x:xs) = do
-    b <- prime_tests_F k x
-    if b then return x else do
-      r <- helper xs
-      return r
+prime_tests_F2 :: Int -> Integer -> IO Bool
+prime_tests_F2 k n = do
+  as <- sequence $ fmap (\_-> randomRIO (1,n-1)) [1..k]
+  return (all (\ a -> exM2 a (n-1) n == 1) as)
+
+testFermat :: Int -> [Integer] -> IO (Integer)
+testFermat k (x:xs) = do
+  b <- prime_tests_F2 k x
+  if b
+  then return x
+  else do
+    r <- testFermat k xs
+    return r
 
 {-
-Tested using ghci, numbers that fooled the tests:
+Tested using ghci and 'testFermat k composites'.
+
+Numbers that fooled the tests:
 k=1 = 4
 k=2 = 65
 k=3 = 91
