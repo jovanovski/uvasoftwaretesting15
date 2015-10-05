@@ -27,13 +27,11 @@ testPrimeMR2 k (x:xs) = do
   b <- primeMR2 k x
   if b
   then return x
-  else do
-    r <- testPrimeMR2 k xs
-    return r
+  else testPrimeMR2 k xs
 
 {-
 
-Tested using 'testMR2 k carmichael'
+Tested using 'testPrimeMR2 k carmichael'
 
 The test is less likely to return true for composites than the fermat test, but
 still returns true for the carmichael numbers sometimes.
