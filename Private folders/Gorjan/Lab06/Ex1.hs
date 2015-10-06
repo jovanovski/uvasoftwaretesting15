@@ -140,3 +140,40 @@ run_getMrNumbers limit = do
 	return res
 
 -- end Ex7
+
+-- Ex8
+
+rsaTest :: IO String
+rsaTest = do
+	let primes1 = filter (>10000) (takeWhile (\x -> x<99999) primes)
+	let primes2 = filter (>100000) (takeWhile (\x -> x<999999) primes)
+	rnd1 <- randomRIO (0, length primes1)
+	rnd2 <- randomRIO (0, length primes2)
+	let g = primes1!!rnd1
+	let p = primes2!!rnd2
+	let secretA = m4
+	let secretB = m5
+	let partA = exM g secretA p
+	let partB = exM g secretB p
+	let key = exM partB secretA p
+	let message = 2^17 -- limit on encoding
+	let encoded = encode p key message
+	print (show encoded)
+	let decoded = decode p key encoded
+	print (show decoded)
+	return "Done"
+
+encode' :: Integer -> Integer -> Integer -> Integer
+encode' p k m = let 
+   p' = p-1
+   e  = head [ x | x <- [k..], gcd x p' == 1 ]
+ 	in 
+   	exM m e p
+
+decode' :: Integer -> Integer -> Integer -> Integer
+decode' p k m = let 
+   p' = p-1
+   e  = head [ x | x <- [k..], gcd x p' == 1 ]
+   d  = invM e p' 
+ 	in 
+   	exM m d p
