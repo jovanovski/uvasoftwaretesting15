@@ -30,7 +30,7 @@ rsa_decode2 = rsa_encode2
 prop_encodeDecodeIdentity :: (Integer,Integer) -> (Integer,Integer) -> Integer -> Bool
 prop_encodeDecodeIdentity pub pri m = rsa_decode2 pri (rsa_encode2 pub m) == m
 
- -- k to use in testKeys, can be set higher to
+ -- k to use in testKeys, can be set higher to increase chance of a prime
 testK :: Int
 testK = 10
 -- prime bit length to use in key generation
