@@ -1,7 +1,7 @@
 import Data.Char
 fact :: Integer -> Integer
 fact 0 = 1
-fact n = (fact' (n-1))*n
+fact n = (fact (n-1))*n
 
 -- works only with numbers 0-9
 sumOfDigits :: String -> Int
