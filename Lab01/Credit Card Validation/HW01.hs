@@ -1,7 +1,7 @@
 {-# OPTIONS_GHC -Wall #-}
 module HW01 where
 
--- Exercise 1 -----------------------------------------
+-- Exercise 1 i am happy -----------------------------------------
 
 -- Get the last digit from a number
 lastDigit :: Integer -> Integer
