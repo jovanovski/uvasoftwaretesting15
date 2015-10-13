@@ -1,0 +1,4 @@
+Clone via git bash
+git remote remove origin
+git remote set-url origin git@github.com:USERNAME/REPO.git
+git remote -v
