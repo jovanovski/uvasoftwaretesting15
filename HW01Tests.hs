@@ -49,8 +49,7 @@ testSumDigits (n, d) = sumDigits n == d
 
 ex4Tests :: [Test]
 ex4Tests = [ Test "sumDigits test" testSumDigits
-			 [([10,5,18,4], 19), ([8,10,15], 15), ([], 0)]
-           ]
+			 [([10,5,18,4], 19), ([8,10,15], 15), ([], 0)]]
 
 -- Exercise 5 -----------------------------------------
 
@@ -77,3 +76,5 @@ allTests = concat [ ex1Tests
                   , ex5Tests
                   , ex6Tests
                   ]
+
+tests  = [("[]", runTests allTests)]

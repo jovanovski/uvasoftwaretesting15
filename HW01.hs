@@ -38,11 +38,4 @@ sumDigits n = toInteger (sum (map (sum . (map digitToInt) . show) n))
 luhn :: Integer -> Bool
 luhn n = rem (sumDigits (doubleEveryOther (toRevDigits n))) 10 == 0
 
--- Exercise 6 -----------------------------------------
-
--- Towers of Hanoi for three pegs
-type Peg = String
-type Move = (Peg, Peg)
-
-hanoi :: Integer -> Peg -> Peg -> Peg -> [Move]
-hanoi = undefined
+main = lastDigit 123
